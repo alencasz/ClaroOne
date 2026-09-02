@@ -1,198 +1,123 @@
-CLARO ONE — INSTALAÇÃO, INICIALIZAÇÃO E TESTES
-================================================
+CLARO ONE — GUIA RÁPIDO PARA WINDOWS
+=====================================
 
-Estas instruções são para Windows e PowerShell.
-Não é necessária nenhuma chave de API.
-
-
-1. PROGRAMAS NECESSÁRIOS
-------------------------
-
-A) Git
-   Baixe e instale: https://git-scm.com/download/win
-
-B) Python 3.11 ou superior
-   Baixe e instale: https://www.python.org/downloads/windows/
-   Durante a instalação, permita adicionar o Python ao PATH.
-
-C) Ollama
-   Baixe e instale: https://ollama.com/download/windows
-   O instalador normalmente inicia o Ollama automaticamente.
+Siga os passos abaixo na ordem. Não é necessário saber programar.
 
 
-2. COPIAR O PROJETO PARA OUTRO COMPUTADOR
-------------------------------------------
+PASSO 1 — INSTALAR OS PROGRAMAS
+-------------------------------
 
-Se o projeto estiver publicado no GitHub/GitLab:
+Instale estes três programas:
 
-git clone URL_DO_REPOSITORIO
-cd ClaroOne
+1. Git: https://git-scm.com/download/win
+2. Python: https://www.python.org/downloads/windows/
+3. Ollama: https://ollama.com/download/windows
 
-Se você recebeu o arquivo ClaroOne.bundle:
+Ao instalar o Python, marque a opção para adicionar o Python ao PATH.
 
-git clone ClaroOne.bundle ClaroOne
+
+PASSO 2 — BAIXAR O PROJETO
+--------------------------
+
+Abra o PowerShell, copie cada comando abaixo e pressione Enter:
+
+git clone https://github.com/alencasz/ClaroOne.git
 cd ClaroOne
 
 
-3. INSTALAR AS DEPENDÊNCIAS DO PROJETO
----------------------------------------
+PASSO 3 — INSTALAR AS DEPENDÊNCIAS
+----------------------------------
 
-Dentro da pasta ClaroOne, execute:
+Ainda no PowerShell, execute um comando de cada vez:
 
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 
-Isso instala FastAPI, faster-whisper e as demais dependências Python.
+A instalação pode demorar alguns minutos.
 
 
-4. PREPARAR O OLLAMA
---------------------
+PASSO 4 — PREPARAR A IA DE CONTEXTO
+-----------------------------------
 
-Baixe o modelo utilizado pelo projeto:
+Abra o aplicativo Ollama. Depois execute no PowerShell:
 
 ollama pull qwen3:4b
 
-Verifique se o modelo está instalado:
-
-ollama list
-
-Se o Ollama não estiver em execução, abra outro PowerShell e execute:
-
-ollama serve
-
-Observação: se aparecer uma mensagem informando que a porta 11434 já está
-ocupada, o Ollama provavelmente já está funcionando.
+Aguarde o download terminar. Isso só precisa ser feito uma vez.
 
 
-5. INICIAR O CLARO ONE
-----------------------
+PASSO 5 — INICIAR O PROJETO
+---------------------------
 
-Na pasta do projeto, execute:
+Execute:
 
 .\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
 
-Abra no navegador:
+Não feche essa janela do PowerShell enquanto estiver usando o projeto.
+
+Abra o navegador neste endereço:
 
 http://127.0.0.1:8000
 
-Para parar o servidor, pressione Ctrl+C no terminal.
+
+PASSO 6 — TESTAR A DEMONSTRAÇÃO
+-------------------------------
+
+1. Na página inicial, clique em Telefone / URA.
+2. Digite o CPF fictício 123.456.789-00.
+3. Escolha um setor.
+4. Carregue um arquivo da pasta Audios:
+
+   - RogerFatura.mp3: escolha Fatura e pagamentos.
+   - BellaInternet.mp3: escolha Internet.
+   - SarahCancelar.mp3: escolha Cancelamento.
+
+5. Clique em Encerrar ligação.
+6. Aguarde a transcrição e a análise do contexto.
+7. Continue pelo WhatsApp ou Minha Claro.
+8. Abra o Cockpit para ver o contexto completo.
+
+Na primeira utilização, o Whisper baixará o modelo de transcrição. Esse primeiro
+processamento precisa de internet e pode demorar mais que os próximos.
 
 
-6. TESTAR A INSTALAÇÃO
-----------------------
+PARA INICIAR NOVAMENTE EM OUTRO DIA
+-----------------------------------
 
-A) Verificar o status técnico:
+1. Abra o aplicativo Ollama.
+2. Abra o PowerShell.
+3. Entre na pasta onde o projeto foi baixado:
 
-http://127.0.0.1:8000/api/health
+cd ClaroOne
 
-O esperado é:
+4. Inicie o projeto:
 
-- backend: ok
-- database: ok
-- ollama: ok
-- ollama_model: qwen3:4b
-- whisper: configured ou loaded
-- demo_fallback: false
+.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
 
-B) Executar os testes automatizados:
+5. Abra http://127.0.0.1:8000
+
+
+TESTE AUTOMATIZADO OPCIONAL
+---------------------------
+
+Para verificar o projeto, execute dentro da pasta ClaroOne:
 
 .\.venv\Scripts\python.exe -m pytest -q
 
-C) Verificar as páginas:
 
-http://127.0.0.1:8000/
-http://127.0.0.1:8000/telefone
-http://127.0.0.1:8000/whatsapp
-http://127.0.0.1:8000/minha-claro
-http://127.0.0.1:8000/atendente
-http://127.0.0.1:8000/debug
+INFORMAÇÕES ÚTEIS
+-----------------
 
+- Para parar o projeto, pressione Ctrl+C no PowerShell.
+- Para limpar os atendimentos, use Reiniciar demonstração na página inicial.
+- Todos os nomes e CPFs do sistema são fictícios.
+- O projeto não precisa de chave de API.
 
-7. TESTAR O FLUXO PRINCIPAL
----------------------------
+CPFs disponíveis:
 
-1. Abra http://127.0.0.1:8000/telefone
-2. Informe o CPF fictício 123.456.789-00
-3. Selecione Fatura e pagamentos
-4. Carregue uma gravação real em WAV, MP3 ou M4A
-5. Clique em Encerrar ligação
-6. Aguarde a IA de Transcrição e a IA de Contexto
-7. Continue pelo WhatsApp ou Minha Claro
-8. Abra o Cockpit para ver contexto, entidades, timeline e transcrição
+- 123.456.789-00 — Lucas de Alencar
+- 987.654.321-00 — Marina Costa
+- 111.222.333-44 — Rafael Nogueira
 
-Na primeira transcrição, o faster-whisper baixa o modelo "small". Esse primeiro
-processamento pode demorar e exige internet. Depois, o modelo fica em cache.
-
-
-8. REINICIAR A DEMONSTRAÇÃO
----------------------------
-
-Use o botão da Home ou da página /debug.
-
-Também é possível executar, com o servidor ligado:
-
-Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/demo/reset
-
-O reset remove CCEs, eventos e gravações, mas preserva os clientes fictícios.
-
-
-9. CONFIGURAÇÃO OPCIONAL
-------------------------
-
-O projeto funciona com os valores padrão. Para personalizar:
-
-Copy-Item .env.example .env
-
-Principais opções:
-
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=qwen3:4b
-WHISPER_MODEL=small
-CCE_TTL_HOURS=2
-DEMO_FALLBACK=false
-
-Mantenha DEMO_FALLBACK=false para usar as IAs reais.
-
-
-10. PUBLICAR O REPOSITÓRIO NA INTERNET
---------------------------------------
-
-Crie no GitHub ou GitLab um repositório vazio chamado ClaroOne.
-Não adicione README, licença ou .gitignore pela página.
-
-Depois execute na pasta do projeto, substituindo a URL:
-
-git remote add origin URL_DO_REPOSITORIO
-git push -u origin main
-
-Exemplo de URL:
-
-https://github.com/SEU_USUARIO/ClaroOne.git
-
-Depois disso, qualquer computador poderá copiar o projeto com:
-
-git clone URL_DO_REPOSITORIO
-
-
-11. PROBLEMAS COMUNS
---------------------
-
-"python não é reconhecido"
-Reinstale o Python e habilite a opção de adicionar ao PATH.
-
-"IA de contextualização indisponível"
-Execute ollama serve e confirme o modelo com ollama list.
-
-"modelo qwen3:4b não encontrado"
-Execute ollama pull qwen3:4b.
-
-"porta 8000 já está em uso"
-Inicie em outra porta:
-
-.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8001
-
-Depois abra http://127.0.0.1:8001
-
-"arquivo de áudio inválido"
-Use um áudio real em WAV, MP3 ou M4A, com até 25 MB e fala em português.
+Se o Ollama não responder, abra outro PowerShell e execute: ollama serve
