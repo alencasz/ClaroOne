@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Cockpit do atendente — Claro One{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/atendente.css') }}">{% endblock %}
+{% block content %}
+<div class="cockpit-header"><div><span class="eyebrow">OPERAÇÃO DE ATENDIMENTO</span><h1>Cockpit Claro One</h1></div><div class="operator"><span>Ambiente simulado</span><b>AT</b><div>Atendente Demo<small>Disponível</small></div></div></div>
+<div class="cockpit-layout">
+  <aside class="session-sidebar">
+    <div class="sidebar-title"><strong>Sessões relevantes</strong><span id="session-count">0</span></div>
+    <div class="session-list" id="session-list"><div class="sidebar-loading">Carregando sessões...</div></div>
+  </aside>
+  <section class="cockpit-main" id="cockpit-main">
+    <div class="empty-cockpit" id="cockpit-empty"><span>CCE</span><h2>Nenhuma sessão selecionada</h2><p>As cápsulas ativas aparecerão na coluna lateral.</p></div>
+    <div class="cockpit-content hidden" id="cockpit-content">
+      <header class="customer-header"><div class="customer-avatar" id="cp-initials"></div><div><span class="eyebrow">CLIENTE</span><h2 id="cp-name"></h2><p><span id="cp-cpf"></span> · <span id="cp-protocol"></span></p></div><div class="customer-meta"><span id="cp-status" class="status-badge"></span><small>Origem: <b id="cp-origin"></b></small><small>Canal atual: <b id="cp-channel"></b></small></div></header>
+      <div id="cp-alert" class="inline-alert hidden"></div>
+      <div class="cockpit-grid">
+        <article class="snapshot-card">
+          <div class="card-heading"><div><span class="eyebrow">SNAPSHOT DE CONTEXTO</span><h3>Case estruturado</h3></div><span class="ai-pill">IA DE CONTEXTO</span></div>
+          <div class="snapshot-main"><div><small>INTENÇÃO</small><strong id="cp-intent"></strong></div><div><small>PROBLEMA</small><strong id="cp-problem"></strong></div><div class="wide"><small>RESUMO</small><p id="cp-summary"></p></div></div>
+          <div class="snapshot-metadata"><div><small>Categoria</small><b id="cp-category"></b></div><div><small>Setor de destino</small><b id="cp-destination"></b></div><div><small>Prioridade</small><b id="cp-priority"></b></div><div><small>Ação sugerida</small><b id="cp-action"></b></div></div>
+        </article>
+        <article class="timeline-card"><div class="card-heading"><div><span class="eyebrow">JORNADA</span><h3>Timeline real</h3></div></div><div class="timeline" id="cp-timeline"></div></article>
+        <article class="entities-card"><div class="card-heading"><div><span class="eyebrow">DADOS EXTRAÍDOS</span><h3>Entidades</h3></div></div><div class="entities-grid" id="cp-entities"></div></article>
+        <article class="lineage-card"><span class="lineage-node"><b>ÁUDIO</b><small>Ligação</small></span><i>→</i><span class="lineage-node"><b>IA 1</b><small>Transcrição</small></span><i>→</i><span class="lineage-node"><b>IA 2</b><small>Contexto</small></span><i>→</i><span class="lineage-node accent"><b>CCE</b><small>Continuidade</small></span></article>
+      </div>
+      <footer class="cockpit-actions"><button class="button secondary" id="view-transcript">Ver transcrição original</button><div><button class="button ghost" id="cp-handoff">Assumir atendimento</button><button class="button primary" id="cp-resolve">Marcar como resolvido</button></div></footer>
+    </div>
+  </section>
+</div>
+<dialog id="transcript-modal" class="transcript-modal"><div class="modal-heading"><div><span class="eyebrow">IA DE TRANSCRIÇÃO · ÁUDIO → TEXTO</span><h2>Transcrição original</h2></div><button id="close-transcript" aria-label="Fechar">×</button></div><p>Transcrição gerada pela IA de voz</p><blockquote id="transcript-text"></blockquote><button class="button secondary" id="close-transcript-bottom">Fechar</button></dialog>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/atendente.js') }}"></script>{% endblock %}

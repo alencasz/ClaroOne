@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Claro One — Continuidade de contexto{% endblock %}
+{% block content %}
+<section class="hero page-shell">
+  <div class="hero-copy">
+    <span class="eyebrow">CONTINUIDADE DE CONTEXTO ENTRE CANAIS</span>
+    <h1>Uma experiência,<br><span>independentemente do canal.</span></h1>
+    <p>A Cápsula de Contexto Efêmera mantém o estado do atendimento com o cliente — e permite que cada canal o transforme na experiência mais adequada.</p>
+  </div>
+  <div class="context-diagram" aria-label="Fluxo do contexto">
+    <div class="diagram-node small">CLIENTE</div><i></i>
+    <div class="diagram-node small">CPF</div><i></i>
+    <div class="diagram-node core"><span>CCE</span><small>contexto centralizado</small></div><i></i>
+    <div class="diagram-channels"><span>TELEFONE</span><span>WHATSAPP</span><span>APP</span><span>ATENDENTE</span></div>
+  </div>
+</section>
+
+<section class="page-shell channel-section">
+  <div class="section-heading">
+    <div><span class="eyebrow">CANAIS CONECTADOS</span><h2>Escolha uma experiência</h2></div>
+    <p>O contexto é o mesmo. A forma de usá-lo muda.</p>
+  </div>
+  <div class="channel-grid">
+    <a class="channel-card phone-card" href="/telefone">
+      <span class="channel-icon icon-phone"></span><span class="card-number">01</span>
+      <h3>Telefone / URA</h3><p>Simular atendimento por voz</p><span class="card-action">Iniciar ligação <b>→</b></span>
+    </a>
+    <a class="channel-card message-card" href="/whatsapp">
+      <span class="channel-icon icon-message"></span><span class="card-number">02</span>
+      <h3>WhatsApp</h3><p>Retomar atendimento conversacional</p><span class="card-action">Abrir mensageria <b>→</b></span>
+    </a>
+    <a class="channel-card app-card" href="/minha-claro">
+      <span class="channel-icon icon-grid"></span><span class="card-number">03</span>
+      <h3>Minha Claro</h3><p>Continuar pelo autoatendimento</p><span class="card-action">Acessar aplicativo <b>→</b></span>
+    </a>
+    <a class="channel-card agent-card" href="/atendente">
+      <span class="channel-icon icon-headset"></span><span class="card-number">04</span>
+      <h3>Cockpit</h3><p>Visualizar contexto pelo atendente</p><span class="card-action">Abrir cockpit <b>→</b></span>
+    </a>
+  </div>
+</section>
+
+<section class="page-shell lower-grid">
+  <div class="tool-panel">
+    <span class="eyebrow">FERRAMENTAS DA DEMONSTRAÇÃO</span>
+    <h2>Estado verificável</h2>
+    <div class="tool-actions">
+      <a class="button secondary" href="/debug">Inspecionar CCE</a>
+      <button class="button ghost" id="home-reset">Limpar / reiniciar demonstração</button>
+    </div>
+  </div>
+  <div class="health-panel">
+    <div class="health-title"><span>Status técnico</span><button id="refresh-health" class="icon-button" aria-label="Atualizar status">↻</button></div>
+    <div class="health-list" id="health-list">
+      <div><span>Backend</span><b class="status-dot checking">Verificando</b></div>
+      <div><span>Banco</span><b class="status-dot checking">Verificando</b></div>
+      <div><span>IA de Transcrição</span><b class="status-dot checking">Verificando</b></div>
+      <div><span>IA de Contextualização</span><b class="status-dot checking">Verificando</b></div>
+    </div>
+    <p id="health-guidance" class="health-guidance hidden"></p>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/home.js') }}"></script>{% endblock %}

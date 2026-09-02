@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}WhatsApp simulado — Claro One{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/whatsapp.css') }}">{% endblock %}
+{% block content %}
+<section class="experience-shell message-experience">
+  <aside class="experience-story">
+    <span class="eyebrow green">CONTEXTO COMO CONVERSA</span><h1>WhatsApp</h1>
+    <p>O contexto anterior vira uma retomada natural. O cliente é encaminhado corretamente sem precisar repetir o problema.</p>
+    <div class="principle-card"><span>CCE</span><i>→</i><strong>CONVERSA</strong><small>Resumo, destino e continuidade</small></div>
+    <div class="privacy-note">Simulação de mensageria · Sem integração com a Meta</div>
+  </aside>
+  <div class="device message-device">
+    <header class="chat-header"><a href="/">←</a><span class="chat-avatar">C1</span><div><strong>Claro One</strong><small>Simulação de mensageria</small></div><b>⋮</b></header>
+    <div id="wa-alert" class="inline-alert hidden"></div>
+    <div class="chat-body" id="chat-body">
+      <section class="wa-step active" data-step="search">
+        <div class="date-chip">Hoje</div>
+        <div class="bubble incoming">Olá! Para localizar um atendimento recente, informe seu CPF.<time>agora</time></div>
+        <div class="cpf-chat-form"><input class="text-input cpf-input" id="wa-cpf" maxlength="14" inputmode="numeric" placeholder="000.000.000-00"><button id="wa-search" aria-label="Pesquisar">→</button></div>
+        <small class="demo-hint">Use o mesmo CPF informado no telefone</small>
+      </section>
+      <section class="wa-step" data-step="found">
+        <div class="bubble outgoing" id="wa-cpf-bubble"></div>
+        <div class="bubble incoming">Encontrei um atendimento recente associado a este CPF.<time>agora</time></div>
+        <article class="recent-case"><span class="found-label">ATENDIMENTO RECENTE ENCONTRADO</span><strong id="wa-problem"></strong><dl><div><dt>Origem</dt><dd id="wa-origin"></dd></div><div><dt>Setor inicial</dt><dd id="wa-department"></dd></div><div><dt>Quando</dt><dd id="wa-when"></dd></div><div><dt>Status</dt><dd id="wa-status"></dd></div></dl><button class="button wa-primary full" id="wa-resume">Retomar atendimento</button><button class="button text-button full" id="wa-new">Iniciar novo atendimento</button></article>
+      </section>
+      <section class="wa-step" data-step="empty">
+        <div class="bubble incoming">Não encontramos nenhum atendimento recente para este CPF.<time>agora</time></div>
+        <button class="button wa-primary" id="wa-empty-new">Novo atendimento</button>
+      </section>
+      <section class="wa-step" data-step="resumed">
+        <div class="date-chip">Sessão retomada</div>
+        <div class="bubble incoming highlight">Encontrei seu atendimento anterior.<br><br>Você estava tratando de:<br><strong id="wa-resumed-problem"></strong><time>agora</time></div>
+        <div class="bubble incoming">Vou continuar seu atendimento com: <strong id="wa-destination"></strong><time>agora</time></div>
+        <div class="system-message"><i></i> Conectando você a um especialista...</div>
+        <div class="bubble agent hidden" id="wa-agent-message"><span class="mini-avatar">A</span><strong>Especialista Claro One</strong><p id="wa-agent-text"></p><time>agora</time></div>
+      </section>
+    </div>
+    <footer class="chat-input"><span>＋</span><input disabled placeholder="Mensagem"><button disabled>➤</button></footer>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/whatsapp.js') }}"></script>{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Telefone / URA — Claro One{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/telefone.css') }}">{% endblock %}
+{% block content %}
+<section class="experience-shell phone-experience">
+  <aside class="experience-story">
+    <span class="eyebrow">CANAL DE ORIGEM</span><h1>Telefone / URA</h1>
+    <p>A ligação inicia o atendimento. Ao final, duas IAs independentes transformam voz em um contexto estruturado e reutilizável.</p>
+    <div class="mini-flow"><span class="active">ÁUDIO</span><i>→</i><span>IA 1<br><small>texto</small></span><i>→</i><span>IA 2<br><small>case</small></span><i>→</i><span>CCE</span></div>
+    <div class="privacy-note">Simulação de telefonia · Nenhuma ligação real é realizada</div>
+  </aside>
+
+  <div class="device phone-device">
+    <div class="device-top"><span class="signal-dot"></span><strong>CLARO ONE</strong><span id="device-time"></span></div>
+    <div id="phone-alert" class="inline-alert hidden"></div>
+
+    <section class="phone-step active" data-step="cpf">
+      <div class="step-label">ATENDIMENTO CLARO ONE</div>
+      <h2>Para começar,<br>informe seu CPF.</h2>
+      <p>Usaremos o CPF apenas para localizar seu contexto de demonstração.</p>
+      <label class="field-label" for="phone-cpf">CPF</label>
+      <input class="text-input cpf-input" id="phone-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" autocomplete="off">
+      <button class="button primary full" id="phone-cpf-submit">Continuar</button>
+      <small class="demo-hint">Teste com 123.456.789-00</small>
+    </section>
+
+    <section class="phone-step" data-step="ura">
+      <button class="back-button" data-back="cpf">← Voltar</button>
+      <span class="welcome-pill">Olá, <strong id="phone-customer-name"></strong></span>
+      <h2>Como podemos ajudar?</h2>
+      <p>Selecione uma opção da URA.</p>
+      <div class="ura-grid">
+        <button data-department="INTERNET"><b>1</b><span>Internet</span></button>
+        <button data-department="TELEFONIA"><b>2</b><span>Telefonia</span></button>
+        <button data-department="FATURAMENTO"><b>3</b><span>Fatura e pagamentos</span></button>
+        <button data-department="CANCELAMENTO"><b>4</b><span>Cancelamento</span></button>
+        <button data-department="OUTROS"><b>5</b><span>Outros</span></button>
+      </div>
+    </section>
+
+    <section class="phone-step call-screen" data-step="call">
+      <span class="call-state"><i></i> LIGAÇÃO EM ANDAMENTO</span>
+      <div class="avatar" id="phone-avatar">LA</div>
+      <h2 id="call-customer-name"></h2><p id="call-department"></p>
+      <div class="call-timer" id="call-timer">00:00</div>
+      <div class="call-controls"><span>◉<small>Microfone</small></span><span>⌁<small>Áudio</small></span></div>
+      <label class="upload-box" for="audio-file">
+        <span class="upload-symbol">↑</span><span><strong>Carregar gravação da ligação</strong><small>WAV, MP3 ou M4A · máximo 25 MB</small></span>
+        <input type="file" id="audio-file" accept=".wav,.mp3,.m4a,audio/wav,audio/mpeg,audio/mp4">
+      </label>
+      <div class="file-selected hidden" id="file-selected"><span>✓</span><div><strong id="file-name"></strong><small>Pronto para enviar</small></div></div>
+      <button class="button danger full" id="end-call">Encerrar ligação</button>
+    </section>
+
+    <section class="phone-step processing-screen" data-step="processing">
+      <div class="processing-orbit"><span></span><b>CCE</b></div>
+      <h2>Transformando a ligação<br>em contexto</h2>
+      <p>As etapas refletem o processamento real do backend.</p>
+      <ol class="processing-list" id="processing-list">
+        <li data-process="audio"><i></i><span><b>Áudio recebido</b><small>Gravação armazenada com segurança</small></span><em>Aguardando</em></li>
+        <li data-process="transcription"><i></i><span><b>IA de Transcrição</b><small>Áudio → texto em português</small></span><em>Aguardando</em></li>
+        <li data-process="transcribed"><i></i><span><b>Transcrição concluída</b><small>Texto armazenado na CCE</small></span><em>Aguardando</em></li>
+        <li data-process="context"><i></i><span><b>IA de Contexto</b><small>Texto + URA → case estruturado</small></span><em>Aguardando</em></li>
+        <li data-process="structured"><i></i><span><b>Contexto estruturado</b><small>Problema, entidades e destino identificados</small></span><em>Aguardando</em></li>
+        <li data-process="updated"><i></i><span><b>CCE atualizada</b><small>Disponível para os demais canais</small></span><em>Aguardando</em></li>
+      </ol>
+      <button class="button secondary full hidden" id="retry-processing">Tentar novamente</button>
+    </section>
+
+    <section class="phone-step result-screen" data-step="result">
+      <div class="success-check">✓</div><span class="eyebrow">CONTEXTO PRESERVADO</span>
+      <h2>Atendimento contextualizado com sucesso</h2>
+      <div class="protocol-box"><span>CCE</span><strong id="result-protocol"></strong></div>
+      <dl class="result-details"><div><dt>Problema</dt><dd id="result-problem"></dd></div><div><dt>Resumo</dt><dd id="result-summary"></dd></div><div><dt>Setor de destino</dt><dd id="result-destination"></dd></div></dl>
+      <div class="ttl-card"><span>Sessão disponível por</span><strong id="result-ttl">02:00:00</strong></div>
+      <div class="result-actions"><a class="button whatsapp-button" id="go-whatsapp" href="/whatsapp">Ir para WhatsApp</a><a class="button primary" id="go-minha-claro" href="/minha-claro">Ir para Minha Claro</a><a class="button ghost" id="view-cce" href="/debug">Ver CCE</a></div>
+    </section>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/telefone.js') }}"></script>{% endblock %}

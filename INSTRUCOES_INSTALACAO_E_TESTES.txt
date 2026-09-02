@@ -1,0 +1,198 @@
+CLARO ONE — INSTALAÇÃO, INICIALIZAÇÃO E TESTES
+================================================
+
+Estas instruções são para Windows e PowerShell.
+Não é necessária nenhuma chave de API.
+
+
+1. PROGRAMAS NECESSÁRIOS
+------------------------
+
+A) Git
+   Baixe e instale: https://git-scm.com/download/win
+
+B) Python 3.11 ou superior
+   Baixe e instale: https://www.python.org/downloads/windows/
+   Durante a instalação, permita adicionar o Python ao PATH.
+
+C) Ollama
+   Baixe e instale: https://ollama.com/download/windows
+   O instalador normalmente inicia o Ollama automaticamente.
+
+
+2. COPIAR O PROJETO PARA OUTRO COMPUTADOR
+------------------------------------------
+
+Se o projeto estiver publicado no GitHub/GitLab:
+
+git clone URL_DO_REPOSITORIO
+cd ClaroOne
+
+Se você recebeu o arquivo ClaroOne.bundle:
+
+git clone ClaroOne.bundle ClaroOne
+cd ClaroOne
+
+
+3. INSTALAR AS DEPENDÊNCIAS DO PROJETO
+---------------------------------------
+
+Dentro da pasta ClaroOne, execute:
+
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+Isso instala FastAPI, faster-whisper e as demais dependências Python.
+
+
+4. PREPARAR O OLLAMA
+--------------------
+
+Baixe o modelo utilizado pelo projeto:
+
+ollama pull qwen3:4b
+
+Verifique se o modelo está instalado:
+
+ollama list
+
+Se o Ollama não estiver em execução, abra outro PowerShell e execute:
+
+ollama serve
+
+Observação: se aparecer uma mensagem informando que a porta 11434 já está
+ocupada, o Ollama provavelmente já está funcionando.
+
+
+5. INICIAR O CLARO ONE
+----------------------
+
+Na pasta do projeto, execute:
+
+.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
+
+Abra no navegador:
+
+http://127.0.0.1:8000
+
+Para parar o servidor, pressione Ctrl+C no terminal.
+
+
+6. TESTAR A INSTALAÇÃO
+----------------------
+
+A) Verificar o status técnico:
+
+http://127.0.0.1:8000/api/health
+
+O esperado é:
+
+- backend: ok
+- database: ok
+- ollama: ok
+- ollama_model: qwen3:4b
+- whisper: configured ou loaded
+- demo_fallback: false
+
+B) Executar os testes automatizados:
+
+.\.venv\Scripts\python.exe -m pytest -q
+
+C) Verificar as páginas:
+
+http://127.0.0.1:8000/
+http://127.0.0.1:8000/telefone
+http://127.0.0.1:8000/whatsapp
+http://127.0.0.1:8000/minha-claro
+http://127.0.0.1:8000/atendente
+http://127.0.0.1:8000/debug
+
+
+7. TESTAR O FLUXO PRINCIPAL
+---------------------------
+
+1. Abra http://127.0.0.1:8000/telefone
+2. Informe o CPF fictício 123.456.789-00
+3. Selecione Fatura e pagamentos
+4. Carregue uma gravação real em WAV, MP3 ou M4A
+5. Clique em Encerrar ligação
+6. Aguarde a IA de Transcrição e a IA de Contexto
+7. Continue pelo WhatsApp ou Minha Claro
+8. Abra o Cockpit para ver contexto, entidades, timeline e transcrição
+
+Na primeira transcrição, o faster-whisper baixa o modelo "small". Esse primeiro
+processamento pode demorar e exige internet. Depois, o modelo fica em cache.
+
+
+8. REINICIAR A DEMONSTRAÇÃO
+---------------------------
+
+Use o botão da Home ou da página /debug.
+
+Também é possível executar, com o servidor ligado:
+
+Invoke-RestMethod -Method Post http://127.0.0.1:8000/api/demo/reset
+
+O reset remove CCEs, eventos e gravações, mas preserva os clientes fictícios.
+
+
+9. CONFIGURAÇÃO OPCIONAL
+------------------------
+
+O projeto funciona com os valores padrão. Para personalizar:
+
+Copy-Item .env.example .env
+
+Principais opções:
+
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen3:4b
+WHISPER_MODEL=small
+CCE_TTL_HOURS=2
+DEMO_FALLBACK=false
+
+Mantenha DEMO_FALLBACK=false para usar as IAs reais.
+
+
+10. PUBLICAR O REPOSITÓRIO NA INTERNET
+--------------------------------------
+
+Crie no GitHub ou GitLab um repositório vazio chamado ClaroOne.
+Não adicione README, licença ou .gitignore pela página.
+
+Depois execute na pasta do projeto, substituindo a URL:
+
+git remote add origin URL_DO_REPOSITORIO
+git push -u origin main
+
+Exemplo de URL:
+
+https://github.com/SEU_USUARIO/ClaroOne.git
+
+Depois disso, qualquer computador poderá copiar o projeto com:
+
+git clone URL_DO_REPOSITORIO
+
+
+11. PROBLEMAS COMUNS
+--------------------
+
+"python não é reconhecido"
+Reinstale o Python e habilite a opção de adicionar ao PATH.
+
+"IA de contextualização indisponível"
+Execute ollama serve e confirme o modelo com ollama list.
+
+"modelo qwen3:4b não encontrado"
+Execute ollama pull qwen3:4b.
+
+"porta 8000 já está em uso"
+Inicie em outra porta:
+
+.\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8001
+
+Depois abra http://127.0.0.1:8001
+
+"arquivo de áudio inválido"
+Use um áudio real em WAV, MP3 ou M4A, com até 25 MB e fala em português.

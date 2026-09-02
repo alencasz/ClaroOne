@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Minha Claro — Continuidade{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/minha_claro.css') }}">{% endblock %}
+{% block content %}
+<section class="app-demo-shell">
+  <aside class="app-side">
+    <span class="eyebrow">CONTEXTO COMO NAVEGAÇÃO</span><h1>Minha Claro</h1>
+    <p>O mesmo contexto reorganiza o autoatendimento e leva o cliente diretamente à área capaz de resolver sua solicitação.</p>
+    <div class="principle-card red"><span>CCE</span><i>→</i><strong>NAVEGAÇÃO</strong><small>Atalho para a funcionalidade correta</small></div>
+  </aside>
+  <div class="selfcare-app">
+    <header class="app-header"><a href="/" class="app-logo">minha <b>claro</b></a><div><span>Dados simulados</span><i class="user-dot"></i></div></header>
+    <div id="mc-alert" class="inline-alert hidden"></div>
+    <section class="mc-step login-step active" data-step="login">
+      <div class="login-art"><span>C1</span></div><span class="eyebrow">BEM-VINDO</span><h2>Acesse sua experiência</h2><p>Informe o CPF do cliente de demonstração.</p>
+      <label class="field-label" for="mc-cpf">CPF</label><input class="text-input cpf-input" id="mc-cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00">
+      <button class="button primary full" id="mc-search">Acessar</button><small class="demo-hint">Teste com 123.456.789-00</small>
+    </section>
+    <section class="mc-step dashboard-step" data-step="found">
+      <div class="app-welcome"><div><small>Olá,</small><h2 id="mc-name"></h2></div><span id="mc-initials"></span></div>
+      <article class="ongoing-card"><div class="ongoing-top"><span><i></i> ATENDIMENTO EM ANDAMENTO</span><small id="mc-protocol"></small></div><h3 id="mc-context-title"></h3><p id="mc-problem"></p><div class="entity-preview" id="mc-entity-preview"></div><button class="button white-button" id="mc-continue">Continuar de onde parei <b>→</b></button></article>
+      <h3 class="section-mini-title">Acesso rápido</h3><div class="quick-grid"><span>▤<small>Faturas</small></span><span>⌁<small>Internet</small></span><span>▯<small>Minha linha</small></span><span>＋<small>Serviços</small></span></div>
+    </section>
+    <section class="mc-step adaptive-step" data-step="adaptive">
+      <button class="back-button" id="mc-back">← Visão geral</button>
+      <div id="adaptive-content"></div>
+    </section>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/minha_claro.js') }}"></script>{% endblock %}
