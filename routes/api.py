@@ -8,7 +8,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from config import settings
 from database import database_health
-from schemas import SessionCreate, SessionResume
+from schemas import HumanRoute, MessageSessionCreate, SessionCreate, SessionResume
 from services import cce_service, context_service, transcription_service
 
 
@@ -68,6 +68,36 @@ def create_session(payload: SessionCreate):
     try:
         return _public_session(cce_service.create_session(payload.cpf, payload.initial_department))
     except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.post("/sessions/message", status_code=201)
+def create_session_from_message(payload: MessageSessionCreate):
+    session: dict | None = None
+    try:
+        session = cce_service.create_message_session(payload.cpf, payload.message)
+        case = context_service.analyze_context(payload.message, "ATENDIMENTO DIGITAL / WHATSAPP")
+        updated = cce_service.store_context(
+            session["id"],
+            case,
+            status="EM_ATENDIMENTO_HUMANO",
+            register_suspension=False,
+        )
+        cce_service.create_event(
+            session["id"],
+            "WHATSAPP",
+            "HUMAN_HANDOFF",
+            "Conversa encaminhada ao setor responsável",
+        )
+        return {"case": case.model_dump(), "session": _public_session(updated)}
+    except context_service.ContextServiceError as exc:
+        if session:
+            cce_service.delete_session(session["id"])
+        logger.exception("Erro ao interpretar mensagem inicial do WhatsApp")
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        if session:
+            cce_service.delete_session(session["id"])
         raise _handle_domain_error(exc) from exc
 
 
@@ -167,6 +197,28 @@ def contextualize(session_id: str):
 def resume(session_id: str, payload: SessionResume):
     try:
         return _public_session(cce_service.resume_session(session_id, payload.channel))
+    except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.post("/sessions/{session_id}/route-human")
+def route_to_human(session_id: str, payload: HumanRoute):
+    try:
+        return _public_session(cce_service.route_to_human(session_id, payload.channel))
+    except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.delete("/sessions/{session_id}")
+def delete_session(session_id: str):
+    try:
+        removed = cce_service.delete_session(session_id)
+        audio_path = removed.get("audio_path")
+        if audio_path:
+            path = Path(audio_path).resolve()
+            if path.parent == settings.upload_dir.resolve() and path.is_file():
+                path.unlink()
+        return {"message": "Contexto anterior removido. Um novo atendimento pode ser iniciado."}
     except Exception as exc:
         raise _handle_domain_error(exc) from exc
 

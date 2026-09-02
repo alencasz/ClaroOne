@@ -6,12 +6,12 @@ Protótipo acadêmico que mantém o contexto de um atendimento quando o cliente 
 
 ## Funcionalidades
 
-- Telefone/URA simulado com envio de gravação.
+- Telefone/URA simulado com envio de gravação e recuperação de sessões iniciadas em outro canal.
 - Transcrição local com faster-whisper.
 - Interpretação do atendimento com Ollama e `qwen3:4b`.
 - CCE com contexto estruturado, eventos e validade de duas horas.
-- Retomada pelo WhatsApp simulado sem repetir o problema.
-- Minha Claro adaptado ao tipo de atendimento.
+- WhatsApp que inicia atendimentos por texto ou retoma uma CCE sem repetir o problema.
+- Minha Claro adaptado à CCE e com navegação manual quando não existe contexto ativo.
 - Cockpit com resumo, entidades, timeline e transcrição.
 - Tela de debug e reinicialização da demonstração.
 

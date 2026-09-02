@@ -44,13 +44,22 @@
     entries.forEach(([key,value]) => { const card = document.createElement('div'); card.className = 'entity-card'; const label = document.createElement('small'); label.textContent = friendly(key); const strong = document.createElement('strong'); strong.textContent = formatEntity(key,value); card.append(label,strong); entities.appendChild(card); });
     const timeline = document.getElementById('cp-timeline'); timeline.innerHTML = '';
     (selected.events || []).forEach(event => { const item = document.createElement('div'); item.className = 'timeline-item'; item.innerHTML = `<time>${brTime(event.created_at)}</time><span class="timeline-marker"><i></i></span><span><b>${friendly(event.channel).toUpperCase()}</b><small>${event.description}</small></span>`; timeline.appendChild(item); });
-    document.getElementById('cp-handoff').disabled = ['RESOLVIDA','EXPIRADA'].includes(selected.status);
+    const messageOrigin = selected.channel_origin === 'WHATSAPP' && !selected.audio_available;
+    document.getElementById('view-transcript').textContent = messageOrigin ? 'Ver mensagem original' : 'Ver transcrição original';
+    document.getElementById('cp-lineage').innerHTML = messageOrigin
+      ? '<span class="lineage-node"><b>MENSAGEM</b><small>WhatsApp</small></span><i>→</i><span class="lineage-node"><b>IA DE CONTEXTO</b><small>Texto → case</small></span><i>→</i><span class="lineage-node accent"><b>CCE</b><small>Continuidade</small></span>'
+      : '<span class="lineage-node"><b>ÁUDIO</b><small>Ligação</small></span><i>→</i><span class="lineage-node"><b>IA 1</b><small>Transcrição</small></span><i>→</i><span class="lineage-node"><b>IA 2</b><small>Contexto</small></span><i>→</i><span class="lineage-node accent"><b>CCE</b><small>Continuidade</small></span>';
+    document.getElementById('cp-handoff').disabled = ['RESOLVIDA','EXPIRADA'].includes(selected.status) || (selected.status === 'EM_ATENDIMENTO_HUMANO' && selected.current_channel === 'COCKPIT');
     document.getElementById('cp-resolve').disabled = ['RESOLVIDA','EXPIRADA'].includes(selected.status);
   }
 
   document.getElementById('view-transcript').addEventListener('click', () => {
-    modal.innerHTML = `<div class="modal-heading"><div><span class="eyebrow">IA DE TRANSCRIÇÃO · ÁUDIO → TEXTO</span><h2>Transcrição original</h2></div><button aria-label="Fechar">×</button></div><p>Transcrição gerada pela IA de voz</p><blockquote></blockquote>`;
-    modal.querySelector('blockquote').textContent = selected.transcript || 'Nenhuma transcrição disponível.';
+    const messageOrigin = selected.channel_origin === 'WHATSAPP' && !selected.audio_available;
+    const label = messageOrigin ? 'ENTRADA DE TEXTO · WHATSAPP' : 'IA DE TRANSCRIÇÃO · ÁUDIO → TEXTO';
+    const title = messageOrigin ? 'Mensagem original' : 'Transcrição original';
+    const description = messageOrigin ? 'Mensagem enviada pelo cliente no início do atendimento' : 'Transcrição gerada pela IA de voz';
+    modal.innerHTML = `<div class="modal-heading"><div><span class="eyebrow">${label}</span><h2>${title}</h2></div><button aria-label="Fechar">×</button></div><p>${description}</p><blockquote></blockquote>`;
+    modal.querySelector('blockquote').textContent = selected.transcript || 'Conteúdo original indisponível.';
     modal.querySelector('button').addEventListener('click', () => modal.close()); modal.showModal();
   });
   document.getElementById('cp-handoff').addEventListener('click', async () => { try { selected = await api(`/api/sessions/${selected.id}/handoff`, {method:'POST'}); selected.events = await api(`/api/sessions/${selected.id}/events`); render(); showAlert(alertBox, 'Atendimento assumido. O handoff foi registrado na timeline.', true); await loadSessions(selected.id); } catch(error){showAlert(alertBox,error.message);} });

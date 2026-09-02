@@ -25,8 +25,23 @@
         <article class="recent-case"><span class="found-label">ATENDIMENTO RECENTE ENCONTRADO</span><strong id="wa-problem"></strong><dl><div><dt>Origem</dt><dd id="wa-origin"></dd></div><div><dt>Setor inicial</dt><dd id="wa-department"></dd></div><div><dt>Quando</dt><dd id="wa-when"></dd></div><div><dt>Status</dt><dd id="wa-status"></dd></div></dl><button class="button wa-primary full" id="wa-resume">Retomar atendimento</button><button class="button text-button full" id="wa-new">Iniciar novo atendimento</button></article>
       </section>
       <section class="wa-step" data-step="empty">
-        <div class="bubble incoming">Não encontramos nenhum atendimento recente para este CPF.<time>agora</time></div>
-        <button class="button wa-primary" id="wa-empty-new">Novo atendimento</button>
+        <div class="bubble incoming">Não encontrei atendimento recente. Você pode iniciar uma nova conversa por aqui.<time>agora</time></div>
+        <button class="button wa-primary" id="wa-empty-new">Iniciar atendimento</button>
+      </section>
+      <section class="wa-step" data-step="compose">
+        <div class="date-chip">Novo atendimento</div>
+        <div class="bubble incoming">Olá, <strong id="wa-compose-name"></strong>. Conte em uma mensagem como podemos ajudar.<time>agora</time></div>
+        <div class="message-examples">Exemplo: “Minha internet está sem funcionar desde ontem.”</div>
+      </section>
+      <section class="wa-step" data-step="creating">
+        <div class="bubble outgoing" id="wa-new-message"></div>
+        <div class="system-message context-loading"><i></i> IA de Contexto interpretando sua mensagem...</div>
+      </section>
+      <section class="wa-step" data-step="created">
+        <div class="bubble outgoing" id="wa-created-message"></div>
+        <div class="bubble incoming highlight">Entendi seu atendimento:<br><strong id="wa-created-problem"></strong><time>agora</time></div>
+        <div class="bubble incoming">Vou direcionar você para: <strong id="wa-created-destination"></strong><time>agora</time></div>
+        <div class="bubble agent"><span class="mini-avatar">A</span><strong>Especialista Claro One</strong><p id="wa-created-agent"></p><time>agora</time></div>
       </section>
       <section class="wa-step" data-step="resumed">
         <div class="date-chip">Sessão retomada</div>
@@ -36,7 +51,7 @@
         <div class="bubble agent hidden" id="wa-agent-message"><span class="mini-avatar">A</span><strong>Especialista Claro One</strong><p id="wa-agent-text"></p><time>agora</time></div>
       </section>
     </div>
-    <footer class="chat-input"><span>＋</span><input disabled placeholder="Mensagem"><button disabled>➤</button></footer>
+    <footer class="chat-input"><span>＋</span><input id="wa-message-input" disabled maxlength="2000" placeholder="Digite sua mensagem"><button id="wa-send" disabled aria-label="Enviar mensagem">➤</button></footer>
   </div>
 </section>
 {% endblock %}

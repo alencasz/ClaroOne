@@ -76,6 +76,10 @@ def create_session(cpf: str, initial_department: str) -> dict[str, Any]:
     customer = get_customer(normalized)
     if not customer:
         raise NotFoundError("Cliente fictício não encontrado.")
+    if find_active_session(normalized):
+        raise SessionUnavailableError(
+            "Já existe uma sessão ativa. Continue ou remova o contexto anterior antes de começar outra."
+        )
 
     session_id = str(uuid.uuid4())
     timestamp = now_local()
@@ -113,6 +117,58 @@ def create_session(cpf: str, initial_department: str) -> dict[str, Any]:
         create_event(session_id, "TELEFONE", "SESSION_CREATED", "CCE criada", connection)
         create_event(session_id, "TELEFONE", "CALL_STARTED", "Ligação iniciada", connection)
     return get_session(session_id)
+
+
+def create_message_session(cpf: str, message: str) -> dict[str, Any]:
+    normalized = normalize_cpf(cpf)
+    customer = get_customer(normalized)
+    if not customer:
+        raise NotFoundError("Cliente fictício não encontrado.")
+    if find_active_session(normalized):
+        raise SessionUnavailableError(
+            "Já existe uma sessão ativa. Continue ou remova o contexto anterior antes de começar outra."
+        )
+    message = message.strip()
+    if len(message) < 3:
+        raise CCEError("Escreva uma mensagem para iniciar o atendimento.")
+
+    session_id = str(uuid.uuid4())
+    timestamp = now_local()
+    expires_at = timestamp + timedelta(hours=settings.cce_ttl_hours)
+    with get_connection() as connection:
+        connection.execute(
+            """INSERT INTO cce_sessions (
+                id, protocol, cpf, customer_name, status, channel_origin,
+                current_channel, initial_department, transcript, structured_context,
+                created_at, updated_at, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                session_id,
+                _protocol(),
+                normalized,
+                customer["name"],
+                "PROCESSANDO",
+                "WHATSAPP",
+                "WHATSAPP",
+                "ATENDIMENTO_DIGITAL",
+                message,
+                "{}",
+                timestamp.isoformat(),
+                timestamp.isoformat(),
+                expires_at.isoformat(),
+            ),
+        )
+        create_event(session_id, "WHATSAPP", "CUSTOMER_AUTHENTICATED", "Cliente autenticado", connection)
+        create_event(session_id, "WHATSAPP", "SESSION_CREATED", "CCE criada a partir da mensagem", connection)
+        create_event(session_id, "WHATSAPP", "MESSAGE_RECEIVED", "Mensagem inicial recebida", connection)
+        create_event(
+            session_id,
+            "IA_CONTEXTO",
+            "CONTEXT_PROCESSING_STARTED",
+            "Interpretação da mensagem iniciada",
+            connection,
+        )
+    return get_session(session_id, check_expiration=False)
 
 
 def get_session(session_id: str, check_expiration: bool = True) -> dict[str, Any]:
@@ -216,10 +272,15 @@ def store_transcript(session_id: str, transcript: str) -> dict[str, Any]:
     return result
 
 
-def store_context(session_id: str, case: ContextCase) -> dict[str, Any]:
+def store_context(
+    session_id: str,
+    case: ContextCase,
+    status: str = "SUSPENSA",
+    register_suspension: bool = True,
+) -> dict[str, Any]:
     result = update_session(
         session_id,
-        status="SUSPENSA",
+        status=status,
         intent=case.intent,
         category=case.category,
         problem=case.problem,
@@ -230,7 +291,8 @@ def store_context(session_id: str, case: ContextCase) -> dict[str, Any]:
         priority=case.priority,
     )
     create_event(session_id, "IA_CONTEXTO", "CONTEXT_IDENTIFIED", "Contexto estruturado identificado")
-    create_event(session_id, "SISTEMA", "SESSION_SUSPENDED", "CCE mantida ativa para continuidade")
+    if register_suspension:
+        create_event(session_id, "SISTEMA", "SESSION_SUSPENDED", "CCE mantida ativa para continuidade")
     return result
 
 
@@ -241,7 +303,7 @@ def mark_context_processing(session_id: str) -> None:
 
 def resume_session(session_id: str, channel: str) -> dict[str, Any]:
     channel = channel.upper()
-    if channel not in {"WHATSAPP", "MINHA_CLARO"}:
+    if channel not in {"TELEFONE", "WHATSAPP", "MINHA_CLARO"}:
         raise CCEError("Canal de retomada inválido.")
     session = get_session(session_id)
     if session["status"] not in RESUMABLE_STATUSES:
@@ -255,13 +317,34 @@ def resume_session(session_id: str, channel: str) -> dict[str, Any]:
     return result
 
 
-def handoff_session(session_id: str) -> dict[str, Any]:
+def route_to_human(session_id: str, channel: str) -> dict[str, Any]:
+    channel = channel.upper()
+    if channel not in {"TELEFONE", "WHATSAPP", "COCKPIT"}:
+        raise CCEError("Canal de atendimento humano inválido.")
     session = get_session(session_id)
     if session["status"] in {"RESOLVIDA", "EXPIRADA"}:
         raise SessionUnavailableError("Esta sessão não está disponível.")
-    result = update_session(session_id, status="EM_ATENDIMENTO_HUMANO", current_channel="COCKPIT")
-    create_event(session_id, "COCKPIT", "HUMAN_HANDOFF", "Atendimento assumido por especialista")
+    if session["status"] == "EM_ATENDIMENTO_HUMANO" and session["current_channel"] == channel:
+        return session
+    result = update_session(
+        session_id,
+        status="EM_ATENDIMENTO_HUMANO",
+        current_channel=channel,
+    )
+    create_event(session_id, channel, "HUMAN_HANDOFF", "Encaminhamento para especialista iniciado")
     return result
+
+
+def handoff_session(session_id: str) -> dict[str, Any]:
+    result = route_to_human(session_id, "COCKPIT")
+    return result
+
+
+def delete_session(session_id: str) -> dict[str, Any]:
+    session = get_session(session_id, check_expiration=False)
+    with get_connection() as connection:
+        connection.execute("DELETE FROM cce_sessions WHERE id = ?", (session_id,))
+    return session
 
 
 def resolve_session(session_id: str) -> dict[str, Any]:

@@ -78,6 +78,12 @@ PASSO 6 — TESTAR A DEMONSTRAÇÃO
 7. Continue pelo WhatsApp ou Minha Claro.
 8. Abra o Cockpit para ver o contexto completo.
 
+Também é possível começar pelo WhatsApp: informe o CPF, inicie um atendimento
+e escreva o problema. Depois abra o Telefone com o mesmo CPF para continuar.
+
+Sem atendimento ativo, o Minha Claro permite navegar pelas áreas de Faturas,
+Pagamentos, Internet, Minha linha e Planos sem utilizar IA.
+
 Na primeira utilização, o Whisper baixará o modelo de transcrição. Esse primeiro
 processamento precisa de internet e pode demorar mais que os próximos.
 

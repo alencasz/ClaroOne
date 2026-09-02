@@ -41,6 +41,8 @@ Padronização para consistência operacional:
   contestação de fatura quando a conversa não menciona cobrança, preço, pagamento ou fatura.
 - Normalize números explicitamente falados para número JSON e respostas sim/não para booleano.
 - A ação sugerida é um identificador em português, não uma instrução conversacional.
+- Nunca devolva todos os campos como null quando a mensagem descreve uma solicitação. Informações
+  claramente escritas pelo cliente devem aparecer no problema, resumo, categoria e destino.
 
 Formato obrigatório:
 {
@@ -192,8 +194,9 @@ def analyze_context(transcript: str, initial_department: str) -> ContextCase:
         {
             "role": "user",
             "content": (
-                "A resposta anterior não corresponde ao JSON obrigatório. Corrija-a e devolva somente "
-                "um objeto JSON válido com todos os campos do formato solicitado."
+                "A resposta anterior está inválida, incompleta ou semanticamente vazia. Analise de fato "
+                "a transcrição recebida. Não devolva problema, resumo ou destino como null quando o cliente "
+                "descreveu uma solicitação. Devolva somente um objeto JSON válido com todos os campos."
             ),
         },
     ]

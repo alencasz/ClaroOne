@@ -32,3 +32,16 @@ def test_parse_json_inside_markdown_and_surrounding_text():
 def test_reject_invalid_priority():
     with pytest.raises(ValidationError):
         parse_context_response(VALID.replace('"NORMAL"', '"QUALQUER"'))
+
+
+def test_normalize_null_priority_returned_by_model():
+    case = parse_context_response(VALID.replace('"NORMAL"', '"null"'))
+    assert case.priority == "NORMAL"
+
+
+def test_reject_semantically_empty_json():
+    with pytest.raises(ValidationError, match="problema, resumo e setor"):
+        parse_context_response(
+            '{"intent":null,"category":null,"problem":null,"summary":null,'
+            '"entities":{},"destination_department":null,"suggested_action":null,"priority":"NORMAL"}'
+        )

@@ -30,12 +30,47 @@
       customer = await api(`/api/customers/${encodeURIComponent(cpfInput.value)}`);
       localStorage.setItem('claroOneCpf', customer.cpf);
       document.getElementById('phone-customer-name').textContent = customer.name;
-      step('ura');
+      try {
+        session = await api(`/api/sessions/active/${encodeURIComponent(customer.cpf)}`);
+        document.getElementById('phone-existing-protocol').textContent = session.protocol;
+        document.getElementById('phone-existing-problem').textContent = session.problem || session.summary || 'Atendimento em andamento';
+        document.getElementById('phone-existing-origin').textContent = friendly(session.channel_origin);
+        document.getElementById('phone-existing-destination').textContent = friendly(session.destination_department || session.initial_department);
+        step('existing');
+      } catch (activeError) {
+        if (activeError.status === 404) { session = null; step('ura'); }
+        else throw activeError;
+      }
     } catch (error) { showAlert(alertBox, error.message); }
     finally { loading(button, false); }
   });
 
-  document.querySelector('[data-back="cpf"]').addEventListener('click', () => step('cpf'));
+  document.querySelectorAll('[data-back="cpf"]').forEach(button => button.addEventListener('click', () => step('cpf')));
+  document.getElementById('phone-continue-session').addEventListener('click', async () => {
+    const button = document.getElementById('phone-continue-session');
+    try {
+      loading(button, true, 'Recuperando contexto...');
+      session = await api(`/api/sessions/${session.id}/resume`, jsonRequest('POST', { channel: 'TELEFONE' }));
+      session = await api(`/api/sessions/${session.id}/route-human`, jsonRequest('POST', { channel: 'TELEFONE' }));
+      document.getElementById('phone-routed-problem').textContent = session.problem || session.summary || 'Atendimento em andamento';
+      document.getElementById('phone-routed-destination').textContent = friendly(session.destination_department || session.initial_department);
+      document.getElementById('phone-routed-cockpit').href = `/atendente?session=${session.id}`;
+      step('routed');
+    } catch (error) { showAlert(alertBox, error.message); }
+    finally { loading(button, false); }
+  });
+  document.getElementById('phone-new-session').addEventListener('click', async () => {
+    if (!confirm('O contexto atual será removido. Deseja começar um novo atendimento?')) return;
+    const button = document.getElementById('phone-new-session');
+    try {
+      loading(button, true, 'Removendo contexto...');
+      await api(`/api/sessions/${session.id}`, { method: 'DELETE' });
+      session = null;
+      localStorage.removeItem('claroOneSession');
+      step('ura');
+    } catch (error) { showAlert(alertBox, error.message); }
+    finally { loading(button, false); }
+  });
   document.querySelectorAll('.ura-grid button').forEach(button => button.addEventListener('click', async () => {
     try {
       button.disabled = true;
