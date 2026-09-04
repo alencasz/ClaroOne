@@ -1,5 +1,5 @@
 (() => {
-  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, formatEntity, initials, currency } = ClaroOne;
+  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, categoryLabel, departmentLabel, categoryArea, formatEntity, initials, currency } = ClaroOne;
   const alertBox = document.getElementById('mc-alert');
   const cpfInput = document.getElementById('mc-cpf');
   const ongoingCard = document.getElementById('mc-ongoing-card');
@@ -10,15 +10,6 @@
   function step(name) {
     document.querySelectorAll('.mc-step').forEach(section => section.classList.toggle('active', section.dataset.step === name));
     hideAlert(alertBox);
-  }
-
-  function areaType(item) {
-    const haystack = [item.intent, item.category, item.initial_department, item.destination_department].join(' ').toUpperCase();
-    if (/FATUR|COBRAN|FINANCE/.test(haystack)) return 'billing';
-    if (/INTERNET|CONEXAO|CONEXÃO|BANDA_LARGA/.test(haystack)) return 'internet';
-    if (/TELEFON|LINHA|MOVEL|MÓVEL/.test(haystack)) return 'phone';
-    if (/CANCEL/.test(haystack)) return 'cancel';
-    return 'generic';
   }
 
   function renderCustomer() {
@@ -54,7 +45,7 @@
 
   function renderContextCard() {
     document.getElementById('mc-protocol').textContent = session.protocol;
-    const type = areaType(session);
+    const type = categoryArea(session.category);
     const titles = {
       billing: 'Encontramos uma solicitação relacionada à sua fatura.',
       internet: 'Encontramos um atendimento sobre sua internet.',
@@ -64,6 +55,8 @@
     };
     document.getElementById('mc-context-title').textContent = titles[type];
     document.getElementById('mc-problem').textContent = session.problem || session.summary;
+    document.getElementById('mc-category').textContent = categoryLabel(session.category);
+    document.getElementById('mc-destination').textContent = departmentLabel(session.destination_department);
     const preview = document.getElementById('mc-entity-preview');
     preview.innerHTML = '';
     Object.entries(session.structured_context || {}).filter(([, value]) => value !== null).slice(0, 3).forEach(([key, value]) => {
@@ -97,14 +90,14 @@
   }
 
   function renderContextArea() {
-    const type = areaType(session);
+    const type = categoryArea(session.category);
     const entity = session.structured_context || {};
     const configurations = {
       billing: { icon: '▤', label: 'FATURAS', title: 'Fatura atual', trail: ['Início', 'Faturas', 'Fatura atual'], item: entity.produto || 'Item relacionado à solicitação', badge: 'CONTEXTO RECUPERADO', status: 'Contestação em andamento', detailLabel: 'Valor relacionado', detail: entity.valor !== undefined && entity.valor !== null ? currency(entity.valor) : 'Consulte os detalhes' },
       internet: { icon: '⌁', label: 'INTERNET', title: 'Status da conexão', trail: ['Início', 'Internet', 'Suporte'], item: entity.equipamento || 'Diagnóstico de conexão', badge: 'CONTEXTO RECUPERADO', status: 'Atendimento em andamento', detailLabel: 'Situação informada', detail: session.problem },
       phone: { icon: '▯', label: 'MINHA LINHA', title: 'Atendimento da linha', trail: ['Início', 'Minha linha', 'Suporte'], item: entity.linha || 'Linha vinculada ao CPF', badge: 'CONTEXTO RECUPERADO', status: 'Atendimento relacionado à linha', detailLabel: 'Situação informada', detail: session.problem },
       cancel: { icon: '⊘', label: 'PLANO E SERVIÇOS', title: 'Solicitação em andamento', trail: ['Início', 'Plano e serviços', 'Solicitação'], item: entity.plano || entity.produto || 'Plano atual', badge: 'CONTEXTO RECUPERADO', status: 'Cancelamento em andamento', detailLabel: 'Próxima ação', detail: friendly(session.suggested_action) },
-      generic: { icon: '◫', label: 'ATENDIMENTO', title: friendly(session.category || 'Solicitação'), trail: ['Início', 'Atendimento', 'Solicitação'], item: session.problem || 'Solicitação em andamento', badge: 'CONTEXTO RECUPERADO', status: 'Contexto recuperado', detailLabel: 'Setor responsável', detail: friendly(session.destination_department) }
+      generic: { icon: '◫', label: 'ATENDIMENTO GERAL', title: categoryLabel(session.category), trail: ['Início', 'Atendimento', 'Solicitação'], item: session.problem || session.summary || 'Solicitação em andamento', badge: 'CONTEXTO RECUPERADO', status: 'Atendimento em andamento', detailLabel: 'Encaminhamento', detail: departmentLabel(session.destination_department) }
     };
     const message = `<div class="case-progress"><b>CCE · ${safe(session.protocol)}</b>Você chegou diretamente aqui porque o contexto do atendimento anterior foi preservado.</div><p class="adapted-summary">${safe(session.summary)}</p>`;
     document.getElementById('adaptive-content').innerHTML = pageMarkup(configurations[type], message);

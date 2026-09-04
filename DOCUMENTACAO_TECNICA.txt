@@ -1,0 +1,99 @@
+CLARO ONE - DOCUMENTAÇÃO TÉCNICA
+
+1. O QUE É O CLARO ONE
+Prototipo academico que preserva o contexto de um atendimento quando o cliente muda de canal.
+Telefone/URA, WhatsApp e Minha Claro sao simulacoes. O Cockpit representa a visao interna do atendente.
+
+2. OBJETIVO DO PROTÓTIPO
+Demonstrar que o problema, e nao a conversa inteira, pode acompanhar o cliente entre canais.
+Todos os clientes e dados exibidos sao ficticios.
+
+3. COMO FUNCIONA O FLUXO
+O cliente informa o CPF, inicia um atendimento e gera uma CCE.
+No Telefone, a fala e gravada e processada somente depois do encerramento da ligacao.
+No WhatsApp, uma mensagem pode iniciar a CCE sem passar pela transcricao de audio.
+A CCE ativa pode ser retomada nos canais e consultada ou assumida no Cockpit sem repetir o problema.
+
+4. ARQUITETURA
+O backend FastAPI entrega paginas Jinja2 e uma API interna REST.
+O frontend usa HTML, CSS e JavaScript vanilla com fetch, sem React ou Node.js.
+SQLite persiste clientes, CCEs e eventos. Os servicos de CCE, transcricao e contexto sao separados.
+
+5. TECNOLOGIAS UTILIZADAS
+Python, FastAPI, Uvicorn, Jinja2, JavaScript vanilla, CSS, SQLite, Pydantic e SDK oficial da Groq.
+Os arquivos INSTALAR.bat e INICIAR_CLARO_ONE.bat simplificam a execucao no Windows.
+
+6. INTELIGÊNCIA ARTIFICIAL
+GroqCloud executa as duas etapas e exige internet e GROQ_API_KEY no backend.
+IA DE TRANSCRICAO: whisper-large-v3-turbo transforma audio em texto em portugues.
+IA DE CONTEXTO: openai/gpt-oss-20b transforma texto em um case estruturado.
+O resultado segue JSON Schema, e validado pelo Pydantic e normalizado antes de ser persistido.
+DEMO_FALLBACK e falso por padrao e, quando ativado manualmente, aparece na interface.
+
+7. CÁPSULA DE CONTEXTO EFÊMERA
+A CCE guarda protocolo, CPF, cliente, status, canais, transcricao, intencao, categoria,
+problema, resumo, entidades, destino, acao sugerida, prioridade e datas.
+O TTL padrao e de duas horas. Uma retomada renova o TTL; sessoes expiradas ou resolvidas nao sao retomadas.
+A timeline registra eventos reais como criacao, transcricao, contextualizacao, mudanca de canal e resolucao.
+
+8. BANCO DE DADOS
+O arquivo data/claro_one.db usa as tabelas customers, cce_sessions e cce_events.
+O schema e o seed sao idempotentes: reiniciar a aplicacao nao duplica clientes.
+O reset remove sessoes e eventos, preserva ou recria os clientes e nao apaga o schema.
+
+9. INTERFACES E CANAIS
+Home: acesso as simulacoes, status tecnico, clientes de teste e reset.
+Telefone/URA: CPF, setor, microfone pelo MediaRecorder e upload manual de audio.
+WhatsApp: atendimento por texto ou retomada usando resumo, categoria e destino da CCE.
+Minha Claro: navegacao adaptada a categoria; sem CCE, permite navegacao manual simulada.
+Cockpit: lista, filtro por categoria, snapshot, entidades, timeline, transcricao e acoes do atendente.
+Debug: lista tecnica e JSON completo das CCEs armazenadas.
+
+10. CATEGORIAS E DEPARTAMENTOS
+FATURAMENTO -> FINANCEIRO
+INTERNET -> SUPORTE_TECNICO
+TELEFONIA -> SUPORTE_TELEFONIA
+CANCELAMENTO -> RETENCAO_CANCELAMENTO
+OUTROS -> OUTROS (label amigavel: Atendimento geral)
+Valores desconhecidos, ambiguos ou incoerentes sao normalizados para OUTROS sem apagar resumo ou entidades.
+
+11. PRINCIPAIS ARQUIVOS
+app.py inicia a aplicacao; config.py le o ambiente; database.py define schema e clientes.
+models.py centraliza taxonomia e status; schemas.py valida entradas e o case da IA.
+services/cce_service.py controla CCE, TTL e eventos.
+services/transcription_service.py envia audio a Groq; services/context_service.py gera o case.
+routes/pages.py entrega as telas; routes/api.py contem a API interna.
+templates/ e static/ contem as interfaces; tests/ contem os testes automatizados.
+
+12. ENDPOINTS DA API
+GET /api/health e GET /api/customers/{cpf}
+POST /api/sessions e POST /api/sessions/message
+GET /api/sessions, GET /api/sessions/active/{cpf} e GET /api/sessions/{id}
+POST /api/sessions/{id}/call/start, /audio, /transcribe e /contextualize
+POST /api/sessions/{id}/resume, /route-human, /handoff e /resolve
+GET /api/sessions/{id}/events e DELETE /api/sessions/{id}
+POST /api/demo/reset e POST /api/demo/clear
+
+13. INSTALAÇÃO E INICIALIZAÇÃO
+Execute INSTALAR.bat uma vez. Obtenha a chave em https://console.groq.com/keys e grave no .env:
+GROQ_API_KEY=chave_da_conta
+As demais variaveis sao GROQ_TRANSCRIPTION_MODEL, GROQ_CONTEXT_MODEL, CCE_TTL_HOURS,
+DEMO_FALLBACK e MAX_UPLOAD_MB. Depois execute INICIAR_CLARO_ONE.bat e abra http://127.0.0.1:8000.
+O upload manual aceita MP3, WAV, M4A, WEBM e OGG como alternativa ao microfone.
+
+14. CLIENTES DE DEMONSTRAÇÃO
+123.456.789-00 Lucas de Alencar; 987.654.321-00 Marina Costa; 111.222.333-44 Rafael Nogueira.
+222.333.444-55 Ana Beatriz Moura; 333.444.555-66 Bruno Tavares Lima; 444.555.666-77 Camila Ribeiro Nunes.
+555.666.777-88 Diego Martins Rocha; 666.777.888-99 Elisa Fernandes Prado; 777.888.999-00 Felipe Andrade Melo.
+888.999.000-11 Gabriela Souza Pires; 999.000.111-22 Henrique Barros Dias; 101.202.303-44 Isabela Monteiro Luz.
+
+15. SEGURANÇA E PRIVACIDADE
+A chave fica apenas no .env, que nao e versionado, e nunca deve ser enviada ao navegador ou aos logs.
+Uploads recebem nomes internos, extensoes e assinaturas sao validadas, e o tamanho e limitado.
+O Cockpit e o Debug mascaram CPFs quando o numero completo nao e necessario.
+
+16. LIMITAÇÕES DO PROTÓTIPO
+PROTOTIPO: FastAPI, SQLite, GroqCloud, interfaces e canais simulados, dados ficticios.
+Nao ha telefonia, Meta/WhatsApp, CRM, billing, autenticacao ou infraestrutura real da Claro.
+PRODUCAO CONCEITUAL: integracoes oficiais, infraestrutura corporativa, canais reais e controles
+empresariais de seguranca, privacidade, auditoria, disponibilidade e retencao de dados.

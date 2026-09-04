@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from utils import format_cpf, format_currency, mask_cpf, normalize_cpf
+from utils import format_cpf, format_currency, friendly_label, mask_cpf, normalize_cpf
 
 
 def test_normalize_formatted_and_plain_cpf():
@@ -22,3 +22,8 @@ def test_format_and_mask_cpf():
 
 def test_brazilian_currency():
     assert format_currency(35) == "R$ 35,00"
+
+
+def test_taxonomy_has_friendly_labels():
+    assert friendly_label("OUTROS") == "Atendimento geral"
+    assert friendly_label("SUPORTE_TELEFONIA") == "Suporte de telefonia"

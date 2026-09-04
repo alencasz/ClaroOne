@@ -50,6 +50,32 @@
     return String(value).replaceAll('_', ' ').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
   }
 
+  const categoryLabels = Object.freeze({
+    FATURAMENTO: 'Faturamento',
+    INTERNET: 'Internet',
+    TELEFONIA: 'Telefonia',
+    CANCELAMENTO: 'Cancelamento',
+    OUTROS: 'Atendimento geral'
+  });
+  const departmentLabels = Object.freeze({
+    FINANCEIRO: 'Financeiro',
+    SUPORTE_TECNICO: 'Suporte técnico',
+    SUPORTE_TELEFONIA: 'Suporte de telefonia',
+    RETENCAO_CANCELAMENTO: 'Retenção e cancelamento',
+    OUTROS: 'Atendimento geral'
+  });
+  const categoryAreas = Object.freeze({
+    FATURAMENTO: 'billing',
+    INTERNET: 'internet',
+    TELEFONIA: 'phone',
+    CANCELAMENTO: 'cancel',
+    OUTROS: 'generic'
+  });
+
+  function categoryLabel(value) { return categoryLabels[value] || friendly(value); }
+  function departmentLabel(value) { return departmentLabels[value] || friendly(value); }
+  function categoryArea(value) { return categoryAreas[value] || 'generic'; }
+
   function brDate(value) {
     if (!value) return '—';
     return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo' }).format(new Date(value));
@@ -76,5 +102,5 @@
 
   function queryCpf() { return new URLSearchParams(location.search).get('cpf') || localStorage.getItem('claroOneCpf') || ''; }
 
-  window.ClaroOne = { api, jsonRequest, showAlert, hideAlert, toast, friendly, brDate, brTime, currency, formatEntity, formatCpf, onlyDigits, initials, queryCpf };
+  window.ClaroOne = { api, jsonRequest, showAlert, hideAlert, toast, friendly, categoryLabel, departmentLabel, categoryArea, brDate, brTime, currency, formatEntity, formatCpf, onlyDigits, initials, queryCpf };
 })();

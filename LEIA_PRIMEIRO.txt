@@ -1,22 +1,30 @@
-CLARO ONE - PASSO A PASSO
+CLARO ONE - GUIA RAPIDO
+Voce precisa de internet e Python 3.11 ou mais recente no Windows.
 
-Voce precisa de internet e do Python instalado no Windows.
-Python: https://www.python.org/downloads/windows/
+PRIMEIRA INSTALACAO
+1. Clique duas vezes em INSTALAR.bat e aguarde a mensagem de sucesso.
+2. Crie uma conta em https://console.groq.com/keys
+3. Clique em Create API Key e copie a chave criada.
+4. Abra .env, cole a chave depois de GROQ_API_KEY= e salve.
 
-1. Na primeira vez, clique duas vezes em INSTALAR.bat.
-2. Obtenha uma chave em https://console.groq.com/keys
-3. Crie sua conta, clique em Create API Key e copie a chave.
-4. Abra o arquivo .env com o Bloco de Notas.
-5. Cole a chave depois de GROQ_API_KEY= e salve o arquivo.
-6. Para usar o projeto, clique em INICIAR_CLARO_ONE.bat.
-7. O navegador abrira http://127.0.0.1:8000
-8. Ao iniciar uma ligacao, clique em Permitir para liberar o microfone.
-9. Para encerrar o servidor, volte ao terminal e pressione Ctrl+C.
+USO NORMAL
+5. Clique duas vezes em INICIAR_CLARO_ONE.bat.
+6. Acesse http://127.0.0.1:8000 (o navegador deve abrir sozinho).
+7. Ao iniciar uma ligacao, clique em Permitir para usar o microfone.
+8. Para encerrar o servidor, volte ao terminal e pressione Ctrl+C.
 
 CLIENTES FICTICIOS
 123.456.789-00 - Lucas de Alencar
 987.654.321-00 - Marina Costa
 111.222.333-44 - Rafael Nogueira
+222.333.444-55 - Ana Beatriz Moura
+333.444.555-66 - Bruno Tavares Lima
+444.555.666-77 - Camila Ribeiro Nunes
+555.666.777-88 - Diego Martins Rocha
+666.777.888-99 - Elisa Fernandes Prado
+777.888.999-00 - Felipe Andrade Melo
+888.999.000-11 - Gabriela Souza Pires
+999.000.111-22 - Henrique Barros Dias
+101.202.303-44 - Isabela Monteiro Luz
 
-Para apagar atendimentos e recomecar, use
-"Limpar / reiniciar demonstracao" na pagina inicial.
+RESET: na Home, clique em "Limpar / reiniciar demonstracao".

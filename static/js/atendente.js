@@ -1,5 +1,5 @@
 (() => {
-  const { api, showAlert, hideAlert, friendly, brDate, brTime, formatEntity, initials, formatCpf } = ClaroOne;
+  const { api, showAlert, hideAlert, friendly, categoryLabel, departmentLabel, brTime, formatEntity, initials, formatCpf } = ClaroOne;
   const list = document.getElementById('session-list');
   const content = document.getElementById('cockpit-content');
   const empty = document.getElementById('cockpit-empty');
@@ -9,24 +9,37 @@
   let selected = null;
 
   const maskCpf = cpf => { const f = formatCpf(cpf); return `***.${f.slice(4, 11)}-**`; };
-  async function loadSessions(preferredId) {
-    sessions = await api('/api/sessions?include_closed=false');
-    document.getElementById('session-count').textContent = sessions.length;
+  async function renderSessionList(preferredId) {
+    const category = document.getElementById('category-filter').value;
+    const visibleSessions = sessions.filter(item => !category || item.category === category);
+    document.getElementById('session-count').textContent = visibleSessions.length;
     list.innerHTML = '';
-    if (!sessions.length) { list.innerHTML = '<div class="sidebar-loading">Nenhuma CCE relevante.</div>'; return; }
-    sessions.forEach(item => {
+    if (!visibleSessions.length) {
+      list.innerHTML = '<div class="sidebar-loading">Nenhuma CCE nesta categoria.</div>';
+      content.classList.add('hidden');
+      empty.classList.remove('hidden');
+      return;
+    }
+    visibleSessions.forEach(item => {
       const button = document.createElement('button'); button.className = `session-item${item.id === selected?.id ? ' active' : ''}`;
-      button.innerHTML = `<span><b>${item.protocol}</b><time>${brTime(item.updated_at)}</time></span><strong>${item.customer_name}</strong><small>${item.problem || item.summary || friendly(item.status)}</small>`;
+      button.dataset.id = item.id;
+      button.innerHTML = `<span><b>${item.protocol}</b><time>${brTime(item.updated_at)}</time></span><strong>${item.customer_name}</strong><small>${categoryLabel(item.category)} · ${item.problem || item.summary || friendly(item.status)}</small>`;
       button.addEventListener('click', () => selectSession(item.id)); list.appendChild(button);
     });
-    const target = preferredId || new URLSearchParams(location.search).get('session') || sessions[0].id;
+    const requested = preferredId || new URLSearchParams(location.search).get('session');
+    const target = visibleSessions.some(item => item.id === requested) ? requested : visibleSessions[0].id;
     await selectSession(target);
+  }
+
+  async function loadSessions(preferredId) {
+    sessions = await api('/api/sessions?include_closed=false');
+    await renderSessionList(preferredId);
   }
 
   async function selectSession(id) {
     try {
       selected = await api(`/api/sessions/${id}`);
-      [...list.children].forEach((node, index) => node.classList?.toggle('active', sessions[index]?.id === id));
+      [...list.children].forEach(node => node.classList?.toggle('active', node.dataset?.id === id));
       render(); empty.classList.add('hidden'); content.classList.remove('hidden');
     } catch (error) { ClaroOne.toast(error.message, true); }
   }
@@ -37,7 +50,7 @@
     set('cp-initials', initials(selected.customer_name)); set('cp-name', selected.customer_name); set('cp-cpf', maskCpf(selected.cpf)); set('cp-protocol', selected.protocol);
     set('cp-status', friendly(selected.status)); set('cp-origin', friendly(selected.channel_origin)); set('cp-channel', friendly(selected.current_channel));
     set('cp-intent', friendly(selected.intent)); set('cp-problem', selected.problem || 'Não identificado'); set('cp-summary', selected.summary || 'Contexto ainda não processado.');
-    set('cp-category', friendly(selected.category)); set('cp-destination', friendly(selected.destination_department)); set('cp-priority', friendly(selected.priority)); set('cp-action', friendly(selected.suggested_action));
+    set('cp-category', categoryLabel(selected.category)); set('cp-destination', departmentLabel(selected.destination_department)); set('cp-priority', friendly(selected.priority)); set('cp-action', friendly(selected.suggested_action));
     const entities = document.getElementById('cp-entities'); entities.innerHTML = '';
     const entries = Object.entries(selected.structured_context || {}).filter(([,value]) => value !== null);
     if (!entries.length) entities.innerHTML = '<p class="muted-empty">Nenhuma entidade extraída.</p>';
@@ -64,5 +77,6 @@
   });
   document.getElementById('cp-handoff').addEventListener('click', async () => { try { selected = await api(`/api/sessions/${selected.id}/handoff`, {method:'POST'}); selected.events = await api(`/api/sessions/${selected.id}/events`); render(); showAlert(alertBox, 'Atendimento assumido. O handoff foi registrado na timeline.', true); await loadSessions(selected.id); } catch(error){showAlert(alertBox,error.message);} });
   document.getElementById('cp-resolve').addEventListener('click', async () => { if(!confirm('Marcar esta sessão como resolvida? Ela não poderá mais ser retomada.')) return; try { await api(`/api/sessions/${selected.id}/resolve`, {method:'POST'}); ClaroOne.toast('Sessão resolvida.'); content.classList.add('hidden'); empty.classList.remove('hidden'); selected=null; await loadSessions(); } catch(error){showAlert(alertBox,error.message);} });
+  document.getElementById('category-filter').addEventListener('change', () => renderSessionList().catch(error => ClaroOne.toast(error.message, true)));
   loadSessions().catch(error => { list.innerHTML = `<div class="sidebar-loading">${error.message}</div>`; });
 })();

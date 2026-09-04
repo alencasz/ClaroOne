@@ -1,5 +1,5 @@
 (() => {
-  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, brDate } = ClaroOne;
+  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, categoryLabel, departmentLabel, brDate } = ClaroOne;
   const alertBox = document.getElementById('wa-alert');
   const cpfInput = document.getElementById('wa-cpf');
   const messageInput = document.getElementById('wa-message-input');
@@ -28,7 +28,8 @@
         document.getElementById('wa-cpf-bubble').textContent = formatCpf(session.cpf);
         document.getElementById('wa-problem').textContent = session.problem || session.summary || 'Atendimento em andamento';
         document.getElementById('wa-origin').textContent = friendly(session.channel_origin);
-        document.getElementById('wa-department').textContent = friendly(session.initial_department);
+        document.getElementById('wa-category').textContent = categoryLabel(session.category);
+        document.getElementById('wa-destination-found').textContent = departmentLabel(session.destination_department);
         document.getElementById('wa-when').textContent = brDate(session.created_at);
         document.getElementById('wa-status').textContent = friendly(session.status);
         step('found');
@@ -73,7 +74,7 @@
       session = await api(`/api/sessions/${session.id}/resume`, jsonRequest('POST', { channel: 'WHATSAPP' }));
       session = await api(`/api/sessions/${session.id}/route-human`, jsonRequest('POST', { channel: 'WHATSAPP' }));
       document.getElementById('wa-resumed-problem').textContent = session.problem || session.summary;
-      document.getElementById('wa-destination').textContent = friendly(session.destination_department || session.initial_department);
+      document.getElementById('wa-destination').textContent = departmentLabel(session.destination_department);
       document.getElementById('wa-agent-text').textContent = `Olá, ${session.customer_name.split(' ')[0]}. Já recebi o contexto do seu atendimento. Podemos continuar daqui.`;
       step('resumed');
       setTimeout(() => {
@@ -102,7 +103,7 @@
       localStorage.setItem('claroOneSession', session.id);
       document.getElementById('wa-created-message').textContent = message;
       document.getElementById('wa-created-problem').textContent = session.problem || session.summary || 'Solicitação identificada';
-      document.getElementById('wa-created-destination').textContent = friendly(session.destination_department || session.category || 'Atendimento geral');
+      document.getElementById('wa-created-destination').textContent = departmentLabel(session.destination_department);
       document.getElementById('wa-created-agent').textContent = `Olá, ${customer.name.split(' ')[0]}. Já recebi o contexto da sua mensagem e podemos continuar daqui.`;
       step('created');
     } catch (error) {

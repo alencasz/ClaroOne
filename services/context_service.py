@@ -9,6 +9,7 @@ from groq import Groq
 from pydantic import ValidationError
 
 from config import settings
+from models import CATEGORY_DESTINATIONS
 from schemas import ContextCase
 
 
@@ -27,11 +28,16 @@ Receba o setor escolhido na URA e a transcrição. O setor é apenas contexto, n
 7. Responda exclusivamente no formato estruturado solicitado.
 
 Padronização operacional:
-- Use categorias como FATURAMENTO, INTERNET, TELEFONIA, CANCELAMENTO ou OUTROS quando aplicáveis.
-- Use destinos como FINANCEIRO, SUPORTE_TECNICO, TELEFONIA, RETENCAO_CANCELAMENTO ou ATENDIMENTO_GERAL.
+- A categoria deve ser exatamente uma destas: FATURAMENTO, INTERNET, TELEFONIA, CANCELAMENTO ou OUTROS.
+- O destino deve corresponder exatamente à categoria: FATURAMENTO → FINANCEIRO; INTERNET → SUPORTE_TECNICO;
+  TELEFONIA → SUPORTE_TELEFONIA; CANCELAMENTO → RETENCAO_CANCELAMENTO; OUTROS → OUTROS.
 - Item não reconhecido em fatura é contestação de faturamento, ainda que o produto mencione internet.
 - Falha de conexão, modem, sinal ou serviço indisponível pertence a INTERNET / SUPORTE_TECNICO.
-- Problema de linha ou chamadas pertence a TELEFONIA. Pedido de cancelamento pertence a CANCELAMENTO.
+- Problema de linha ou chamadas pertence a TELEFONIA / SUPORTE_TELEFONIA.
+- Pedido de cancelamento pertence a CANCELAMENTO / RETENCAO_CANCELAMENTO.
+- Use OUTROS / OUTROS quando o assunto estiver ambíguo, tiver informação insuficiente ou for elogio,
+  dúvida geral, benefício, atualização cadastral, mudança de titularidade ou outro tema fora das quatro áreas.
+- Não force uma solicitação incerta em uma categoria principal. Preserve problema, resumo e entidades em OUTROS.
 - Use identificadores MAIUSCULOS_COM_UNDERLINE para intent, category, destination_department e suggested_action.
 - Cada entidade deve ter um nome curto e um valor JSON simples. Não inclua entidades sem apoio no texto.
 - A prioridade deve ser BAIXA, NORMAL, ALTA ou URGENTE e considerar impacto e tom explicitamente demonstrados.
@@ -41,10 +47,13 @@ CONTEXT_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
         "intent": {"type": ["string", "null"]},
-        "category": {"type": ["string", "null"]},
+        "category": {
+            "type": "string",
+            "enum": list(CATEGORY_DESTINATIONS),
+        },
         "problem": {"type": ["string", "null"]},
         "summary": {"type": ["string", "null"]},
-        "entities": {
+        "structured_context": {
             "type": "array",
             "items": {
                 "type": "object",
@@ -56,7 +65,10 @@ CONTEXT_JSON_SCHEMA: dict[str, Any] = {
                 "additionalProperties": False,
             },
         },
-        "destination_department": {"type": ["string", "null"]},
+        "destination_department": {
+            "type": "string",
+            "enum": list(CATEGORY_DESTINATIONS.values()),
+        },
         "suggested_action": {"type": ["string", "null"]},
         "priority": {"type": "string", "enum": ["BAIXA", "NORMAL", "ALTA", "URGENTE"]},
     },
@@ -65,7 +77,7 @@ CONTEXT_JSON_SCHEMA: dict[str, Any] = {
         "category",
         "problem",
         "summary",
-        "entities",
+        "structured_context",
         "destination_department",
         "suggested_action",
         "priority",
@@ -78,7 +90,7 @@ DEMO_CASE = ContextCase(
     category="FATURAMENTO",
     problem="Cobrança não reconhecida",
     summary="Cliente contesta cobrança de R$ 35,00 por pacote adicional de internet que afirma não ter contratado.",
-    entities={
+    structured_context={
         "valor": 35.0,
         "produto": "Pacote adicional de internet",
         "reconhece_contratacao": False,
@@ -140,12 +152,14 @@ def _extract_json(text: str) -> dict[str, Any]:
     return value
 
 
-def _normalize_entities(payload: dict[str, Any]) -> dict[str, Any]:
-    entities = payload.get("entities")
-    if not isinstance(entities, list):
-        return payload
+def _normalize_structured_context(payload: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(payload)
-    normalized["entities"] = {
+    if "structured_context" not in normalized and "entities" in normalized:
+        normalized["structured_context"] = normalized.pop("entities")
+    entities = normalized.get("structured_context")
+    if not isinstance(entities, list):
+        return normalized
+    normalized["structured_context"] = {
         str(item["name"]): item.get("value")
         for item in entities
         if isinstance(item, dict) and item.get("name")
@@ -154,7 +168,7 @@ def _normalize_entities(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def parse_context_response(text: str) -> ContextCase:
-    return ContextCase.model_validate(_normalize_entities(_extract_json(text)))
+    return ContextCase.model_validate(_normalize_structured_context(_extract_json(text)))
 
 
 def _friendly_api_error(exc: Exception) -> ContextServiceError:
@@ -183,6 +197,19 @@ def _friendly_api_error(exc: Exception) -> ContextServiceError:
     return ContextServiceError(
         "A Groq não conseguiu interpretar o atendimento. Tente novamente."
     )
+
+
+def _failed_structured_generation(exc: Exception) -> str | None:
+    if getattr(exc, "status_code", None) != 400:
+        return None
+    body = getattr(exc, "body", None)
+    if not isinstance(body, dict):
+        return None
+    details = body.get("error", body)
+    if not isinstance(details, dict) or details.get("code") != "json_validate_failed":
+        return None
+    failed = details.get("failed_generation")
+    return failed if isinstance(failed, str) and failed.strip() else None
 
 
 def health_check() -> tuple[str, bool]:
@@ -226,6 +253,10 @@ def _generate(messages: list[dict[str, str]]) -> str:
     except ContextServiceError:
         raise
     except Exception as exc:
+        failed_generation = _failed_structured_generation(exc)
+        if failed_generation:
+            logger.warning("Groq rejeitou o JSON gerado; encaminhando para a tentativa de correção")
+            return failed_generation
         logger.exception("Falha na contextualização pela Groq")
         raise _friendly_api_error(exc) from exc
 
@@ -257,7 +288,8 @@ def analyze_context(transcript: str, initial_department: str) -> ContextCase:
             "role": "user",
             "content": (
                 "Corrija a resposta. Problema, resumo e setor de destino devem ser preenchidos quando "
-                "a interação descreve uma solicitação. Use apenas fatos apoiados no texto."
+                "a interação descreve uma solicitação. Use apenas fatos apoiados no texto e respeite "
+                "a relação exata entre categoria e departamento definida no schema."
             ),
         },
     ]

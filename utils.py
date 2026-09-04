@@ -8,6 +8,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from config import settings
+from models import CATEGORY_LABELS, DESTINATION_LABELS
 
 
 TZ = ZoneInfo(settings.timezone)
@@ -55,6 +56,10 @@ def format_time(value: str | datetime | None) -> str:
 def friendly_label(value: str | None) -> str:
     if not value:
         return "Não identificado"
+    if value in CATEGORY_LABELS:
+        return CATEGORY_LABELS[value]
+    if value in DESTINATION_LABELS:
+        return DESTINATION_LABELS[value]
     return value.replace("_", " ").strip().title()
 
 

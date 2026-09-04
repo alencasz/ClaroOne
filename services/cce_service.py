@@ -300,7 +300,7 @@ def store_context(
         category=case.category,
         problem=case.problem,
         summary=case.summary,
-        structured_context=case.entities,
+        structured_context=case.structured_context,
         destination_department=case.destination_department,
         suggested_action=case.suggested_action,
         priority=case.priority,

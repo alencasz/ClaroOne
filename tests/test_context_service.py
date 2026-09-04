@@ -16,7 +16,7 @@ VALID = """{
   "category": "INTERNET",
   "problem": "Conexão indisponível",
   "summary": "Internet sem funcionar desde ontem.",
-  "entities": {"luz_modem": "vermelha", "reinicializacoes": 2},
+  "structured_context": {"luz_modem": "vermelha", "reinicializacoes": 2},
   "destination_department": "SUPORTE_TECNICO",
   "suggested_action": "DIAGNOSTICAR_CONEXAO",
   "priority": "NORMAL"
@@ -27,6 +27,8 @@ def test_parse_plain_json():
     case = parse_context_response(VALID)
     assert case.category == "INTERNET"
     assert case.entities["reinicializacoes"] == 2
+    assert "structured_context" in case.model_dump()
+    assert "entities" not in case.model_dump()
 
 
 def test_parse_json_inside_markdown_and_surrounding_text():
@@ -36,7 +38,7 @@ def test_parse_json_inside_markdown_and_surrounding_text():
 
 def test_parse_structured_output_entity_list():
     payload = json.loads(VALID)
-    payload["entities"] = [
+    payload["structured_context"] = [
         {"name": "luz_modem", "value": "vermelha"},
         {"name": "reinicializacoes", "value": 2},
     ]
@@ -58,7 +60,7 @@ def test_reject_semantically_empty_json():
     with pytest.raises(ValidationError, match="problema, resumo e setor"):
         parse_context_response(
             '{"intent":null,"category":null,"problem":null,"summary":null,'
-            '"entities":{},"destination_department":null,"suggested_action":null,"priority":"NORMAL"}'
+            '"structured_context":{},"destination_department":null,"suggested_action":null,"priority":"NORMAL"}'
         )
 
 
@@ -95,11 +97,118 @@ def test_contextualization_is_simulated_without_api_call(monkeypatch):
     assert captured["response_format"]["json_schema"]["strict"] is True
 
 
+def test_provider_rejected_json_uses_single_correction_attempt(monkeypatch):
+    calls = 0
+
+    class RejectedJson(Exception):
+        status_code = 400
+        body = {
+            "code": "json_validate_failed",
+            "failed_generation": VALID[:-1] + ",}",
+        }
+
+    class Completions:
+        @staticmethod
+        def create(**_kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise RejectedJson()
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=VALID))]
+            )
+
+    fake_client = SimpleNamespace(chat=SimpleNamespace(completions=Completions()))
+    monkeypatch.setattr(context_service, "_create_client", lambda: fake_client)
+    case = context_service.analyze_context("Minha internet não funciona.", "INTERNET")
+    assert calls == 2
+    assert case.category == "INTERNET"
+
+
 def test_structured_schema_is_strict_and_dynamic():
     schema = context_service.CONTEXT_JSON_SCHEMA
     assert schema["additionalProperties"] is False
-    assert schema["properties"]["entities"]["type"] == "array"
-    assert schema["properties"]["entities"]["items"]["additionalProperties"] is False
+    assert schema["properties"]["structured_context"]["type"] == "array"
+    assert schema["properties"]["structured_context"]["items"]["additionalProperties"] is False
+    assert schema["properties"]["category"]["enum"] == [
+        "FATURAMENTO", "INTERNET", "TELEFONIA", "CANCELAMENTO", "OUTROS"
+    ]
+    assert schema["properties"]["destination_department"]["enum"] == [
+        "FINANCEIRO", "SUPORTE_TECNICO", "SUPORTE_TELEFONIA",
+        "RETENCAO_CANCELAMENTO", "OUTROS"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("category", "destination"),
+    [
+        ("FATURAMENTO", "FINANCEIRO"),
+        ("INTERNET", "SUPORTE_TECNICO"),
+        ("TELEFONIA", "SUPORTE_TELEFONIA"),
+        ("CANCELAMENTO", "RETENCAO_CANCELAMENTO"),
+        ("OUTROS", "OUTROS"),
+    ],
+)
+def test_allowed_ai_classifications_are_preserved(category, destination):
+    payload = json.loads(VALID)
+    payload.update(category=category, destination_department=destination)
+    case = parse_context_response(json.dumps(payload))
+    assert case.category == category
+    assert case.destination_department == destination
+
+
+@pytest.mark.parametrize(
+    ("transcript", "category", "destination"),
+    [
+        ("Existe uma cobrança que não reconheço na minha fatura.", "FATURAMENTO", "FINANCEIRO"),
+        ("Minha internet está sem funcionar e o modem está com a luz vermelha.", "INTERNET", "SUPORTE_TECNICO"),
+        ("Não consigo realizar ligações e minha linha está sem sinal.", "TELEFONIA", "SUPORTE_TELEFONIA"),
+        ("Quero cancelar definitivamente meu plano.", "CANCELAMENTO", "RETENCAO_CANCELAMENTO"),
+        ("Quero atualizar meus dados cadastrais.", "OUTROS", "OUTROS"),
+    ],
+)
+def test_contextualization_pipeline_for_five_categories_uses_mocked_ai(
+    monkeypatch, transcript, category, destination
+):
+    payload = json.loads(VALID)
+    payload.update(
+        category=category,
+        destination_department=destination,
+        problem="Solicitação identificada",
+        summary=transcript,
+    )
+    monkeypatch.setattr(context_service, "_generate", lambda _messages: json.dumps(payload))
+    case = context_service.analyze_context(transcript, "OUTROS")
+    assert case.category == category
+    assert case.destination_department == destination
+
+
+@pytest.mark.parametrize(
+    ("category", "destination"),
+    [
+        ("DESCONHECIDA", "FINANCEIRO"),
+        ("FATURAMENTO", "DEPARTAMENTO_INEXISTENTE"),
+        ("INTERNET", "FINANCEIRO"),
+        (None, None),
+    ],
+)
+def test_unknown_or_incoherent_taxonomy_is_safely_normalized(category, destination):
+    payload = json.loads(VALID)
+    payload.update(category=category, destination_department=destination)
+    payload["summary"] = "Resumo que deve ser preservado."
+    payload["structured_context"] = {"informacao": "preservada"}
+    case = parse_context_response(json.dumps(payload))
+    assert case.category == "OUTROS"
+    assert case.destination_department == "OUTROS"
+    assert case.summary == "Resumo que deve ser preservado."
+    assert case.structured_context == {"informacao": "preservada"}
+
+
+def test_legacy_entities_name_remains_readable():
+    payload = json.loads(VALID)
+    payload["entities"] = payload.pop("structured_context")
+    case = parse_context_response(json.dumps(payload))
+    assert case.structured_context["luz_modem"] == "vermelha"
 
 
 def test_health_without_key_does_not_call_external_api(monkeypatch):

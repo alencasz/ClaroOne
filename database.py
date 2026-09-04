@@ -62,6 +62,15 @@ DEMO_CUSTOMERS = (
     ("12345678900", "Lucas de Alencar"),
     ("98765432100", "Marina Costa"),
     ("11122233344", "Rafael Nogueira"),
+    ("22233344455", "Ana Beatriz Moura"),
+    ("33344455566", "Bruno Tavares Lima"),
+    ("44455566677", "Camila Ribeiro Nunes"),
+    ("55566677788", "Diego Martins Rocha"),
+    ("66677788899", "Elisa Fernandes Prado"),
+    ("77788899900", "Felipe Andrade Melo"),
+    ("88899900011", "Gabriela Souza Pires"),
+    ("99900011122", "Henrique Barros Dias"),
+    ("10120230344", "Isabela Monteiro Luz"),
 )
 
 

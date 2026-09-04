@@ -5,7 +5,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from config import BASE_DIR, settings
+from database import DEMO_CUSTOMERS
 from utils import format_currency, format_datetime, format_time, friendly_label, mask_cpf
+from utils import format_cpf
 
 
 router = APIRouter()
@@ -19,17 +21,20 @@ templates.env.filters.update(
 )
 
 
-def _render(request: Request, template: str, page: str) -> HTMLResponse:
+def _render(request: Request, template: str, page: str, **context) -> HTMLResponse:
     return templates.TemplateResponse(
         request=request,
         name=template,
-        context={"page": page, "demo_fallback": settings.demo_fallback},
+        context={"page": page, "demo_fallback": settings.demo_fallback, **context},
     )
 
 
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return _render(request, "index.html", "home")
+    demo_customers = [
+        {"cpf": format_cpf(cpf), "name": name} for cpf, name in DEMO_CUSTOMERS
+    ]
+    return _render(request, "index.html", "home", demo_customers=demo_customers)
 
 
 @router.get("/telefone", response_class=HTMLResponse)

@@ -27,7 +27,7 @@ main { min-height: calc(100vh - 132px); }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 17px; letter-spacing: .08em; white-space: nowrap; }
 .brand strong { color: var(--red); }
 .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--red); font-weight: 800; font-size: 12px; letter-spacing: -.04em; box-shadow: 0 4px 12px rgba(215,25,32,.25); }
-.topnav { display: flex; height: 100%; align-items: center; gap: 28px; color: #545b66; font-size: 13px; font-weight: 650; }
+.topnav { display: flex; height: 100%; margin-left: auto; align-items: center; gap: 28px; color: #545b66; font-size: 13px; font-weight: 650; }
 .topnav a { height: 100%; display: grid; place-items: center; position: relative; }
 .topnav a:hover, .topnav a.active { color: var(--red); }
 .topnav a.active::after { content: ""; position: absolute; height: 3px; left: 0; right: 0; bottom: 0; background: var(--red); border-radius: 3px 3px 0 0; }
@@ -67,6 +67,11 @@ main { min-height: calc(100vh - 132px); }
 .lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding-bottom: 70px; }
 .tool-panel, .health-panel { padding: 28px; background: white; border: 1px solid var(--line); border-radius: var(--radius); }
 .tool-actions { display: flex; gap: 10px; margin-top: 24px; }
+.demo-customers { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.demo-customers summary { color: #636a74; cursor: pointer; font-size: 11px; font-weight: 750; }
+.demo-customer-list { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 18px; margin-top: 13px; }
+.demo-customer-list span { display: flex; justify-content: space-between; gap: 8px; color: #646b75; font-size: 9px; }
+.demo-customer-list small { color: #969ba3; white-space: nowrap; }
 .health-title { display: flex; align-items: center; justify-content: space-between; font-weight: 750; margin-bottom: 13px; }
 .health-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 26px; }
 .health-list > div { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f0f1f2; font-size: 12px; }
@@ -94,5 +99,5 @@ main { min-height: calc(100vh - 132px); }
 .site-footer { min-height: 60px; border-top: 1px solid var(--line); padding: 0 clamp(20px, 5vw, 72px); display: flex; align-items: center; justify-content: space-between; color: #8c929b; font-size: 10px; letter-spacing: .06em; background: white; }
 .toast-region { position: fixed; right: 20px; bottom: 20px; z-index: 100; display: grid; gap: 8px; }.toast { padding: 13px 16px; color: white; background: #24272c; border-radius: 10px; box-shadow: var(--shadow); font-size: 12px; animation: toast-in .2s ease-out; }.toast.error { background: #9e171c; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
-@media (max-width: 900px) { .topnav { display: none; }.environment-label { display: none; }.hero { grid-template-columns: 1fr; gap: 35px; padding-top: 55px; }.channel-grid { grid-template-columns: 1fr 1fr; }.experience-shell { grid-template-columns: 1fr; gap: 30px; }.experience-story { padding-top: 15px; }.experience-story h1, .app-side h1 { font-size: 38px; }.experience-story > p { max-width: none; }.device { width: min(100%, 520px); margin: auto; } }
-@media (max-width: 600px) { .topbar { height: 60px; padding-inline: 16px; }.page-shell { width: min(100% - 26px, 1180px); }.hero { padding-block: 42px; }.hero h1 { font-size: 42px; }.context-diagram { padding: 20px; }.diagram-channels { grid-template-columns: 1fr 1fr; }.channel-grid, .lower-grid { grid-template-columns: 1fr; }.channel-card { min-height: 220px; }.section-heading { display: block; }.section-heading p { margin-top: 10px; }.health-list { grid-template-columns: 1fr; }.site-footer { padding: 18px; gap: 10px; }.experience-shell { width: 100%; padding: 26px 13px; }.experience-story { padding-inline: 8px; }.device { border-radius: 20px; }.tool-actions { flex-direction: column; } }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 35px; padding-top: 55px; }.channel-grid { grid-template-columns: 1fr 1fr; }.experience-shell { grid-template-columns: 1fr; gap: 30px; }.experience-story { padding-top: 15px; }.experience-story h1, .app-side h1 { font-size: 38px; }.experience-story > p { max-width: none; }.device { width: min(100%, 520px); margin: auto; } }
+@media (max-width: 600px) { .topbar { height: 60px; padding-inline: 16px; gap: 14px; }.topnav { font-size: 11px; }.brand { font-size: 14px; }.brand-mark { width: 30px; height: 30px; }.page-shell { width: min(100% - 26px, 1180px); }.hero { padding-block: 42px; }.hero h1 { font-size: 42px; }.context-diagram { padding: 20px; }.diagram-channels { grid-template-columns: 1fr 1fr; }.channel-grid, .lower-grid { grid-template-columns: 1fr; }.channel-card { min-height: 220px; }.section-heading { display: block; }.section-heading p { margin-top: 10px; }.health-list { grid-template-columns: 1fr; }.site-footer { padding: 18px; gap: 10px; }.experience-shell { width: 100%; padding: 26px 13px; }.experience-story { padding-inline: 8px; }.device { border-radius: 20px; }.tool-actions { flex-direction: column; }.demo-customer-list { grid-template-columns: 1fr; } }

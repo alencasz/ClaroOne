@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from fastapi.testclient import TestClient
 
 from app import app
@@ -48,6 +50,46 @@ def test_pages_open_and_session_api_normalizes_cpf():
         assert started.status_code == 200
         timeline = client.get(f"/api/sessions/{session['id']}/events").json()
         assert timeline[-1]["event_type"] == "CALL_STARTED"
+
+
+def test_header_has_only_home_brand_and_cockpit_while_home_keeps_channel_cards():
+    with TestClient(app) as client:
+        for path in ("/", "/telefone", "/whatsapp", "/minha-claro", "/atendente", "/debug"):
+            response = client.get(path)
+            assert response.status_code == 200
+            header = re.search(r'<header class="topbar">(.*?)</header>', response.text, re.DOTALL)
+            assert header
+            markup = header.group(1)
+            assert 'class="brand" href="/"' in markup
+            assert 'href="/atendente"' in markup
+            assert 'href="/telefone"' not in markup
+            assert 'href="/whatsapp"' not in markup
+            assert 'href="/minha-claro"' not in markup
+
+        home = client.get("/").text
+        for channel_path in ("/telefone", "/whatsapp", "/minha-claro", "/atendente"):
+            assert f'class="channel-card' in home
+            assert f'href="{channel_path}"' in home
+        stylesheet = client.get("/static/css/global.css").text
+        assert ".topnav { display: none;" not in stylesheet
+
+
+def test_channel_templates_expose_shared_friendly_taxonomy_fields():
+    with TestClient(app) as client:
+        whatsapp = client.get("/whatsapp").text
+        assert 'id="wa-category"' in whatsapp
+        assert 'id="wa-destination-found"' in whatsapp
+        minha_claro = client.get("/minha-claro").text
+        assert 'id="mc-category"' in minha_claro
+        assert 'id="mc-destination"' in minha_claro
+        cockpit = client.get("/atendente").text
+        assert 'id="cp-category"' in cockpit
+        assert 'id="cp-destination"' in cockpit
+        assert '<option value="OUTROS">Outros</option>' in cockpit
+        debug = client.get("/debug").text
+        assert "Categoria" in debug and "Destino" in debug
+        common_js = client.get("/static/js/common.js").text
+        assert "OUTROS: 'Atendimento geral'" in common_js
 
 
 def test_invalid_upload_format_is_friendly():
@@ -305,10 +347,9 @@ def test_reset_removes_sessions_and_preserves_real_seed_customers(monkeypatch):
         reset = client.post("/api/demo/reset")
         assert reset.status_code == 200
         assert client.get("/api/sessions").json() == []
-        expected = {
-            "12345678900": "Lucas de Alencar",
-            "98765432100": "Marina Costa",
-            "11122233344": "Rafael Nogueira",
-        }
+        from database import DEMO_CUSTOMERS
+
+        expected = dict(DEMO_CUSTOMERS)
+        assert len(expected) >= 12
         for cpf, name in expected.items():
             assert client.get(f"/api/customers/{cpf}").json()["name"] == name

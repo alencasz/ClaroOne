@@ -48,6 +48,14 @@
       <a class="button secondary" href="/debug">Inspecionar CCE</a>
       <button class="button ghost" id="home-reset">Limpar / reiniciar demonstração</button>
     </div>
+    <details class="demo-customers">
+      <summary>Clientes disponíveis para teste ({{ demo_customers|length }})</summary>
+      <div class="demo-customer-list">
+        {% for customer in demo_customers %}
+        <span><b>{{ customer.name }}</b><small>{{ customer.cpf }}</small></span>
+        {% endfor %}
+      </div>
+    </details>
   </div>
   <div class="health-panel">
     <div class="health-title"><span>Status técnico</span><button id="refresh-health" class="icon-button" aria-label="Atualizar status">↻</button></div>

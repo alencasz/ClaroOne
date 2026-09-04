@@ -1,5 +1,5 @@
 (() => {
-  const { api, friendly, brDate, formatCpf, toast } = ClaroOne;
+  const { api, friendly, categoryLabel, departmentLabel, brDate, formatCpf, toast } = ClaroOne;
   const tableBody = document.getElementById('debug-sessions');
   const jsonCode = document.getElementById('session-json');
   const modal = document.getElementById('reset-modal');
@@ -17,11 +17,11 @@
   async function load() {
     const sessions = await api('/api/sessions?include_closed=true');
     tableBody.innerHTML = '';
-    if (!sessions.length) tableBody.innerHTML = '<tr><td colspan="8">Nenhuma CCE armazenada.</td></tr>';
+    if (!sessions.length) tableBody.innerHTML = '<tr><td colspan="9">Nenhuma CCE armazenada.</td></tr>';
     sessions.forEach(item => {
       const row = document.createElement('tr');
       row.dataset.id = item.id;
-      row.innerHTML = `<td>${item.protocol}</td><td>${maskCpf(item.cpf)}</td><td>${item.customer_name}</td><td><span class="table-status">${friendly(item.status)}</span></td><td>${friendly(item.intent)}</td><td>${friendly(item.current_channel)}</td><td>${brDate(item.created_at)}</td><td>${brDate(item.expires_at)}<strong class="ttl-value" data-expires="${item.expires_at}" data-status="${item.status}">${ttl(item.expires_at, item.status)}</strong></td>`;
+      row.innerHTML = `<td>${item.protocol}</td><td>${maskCpf(item.cpf)}</td><td>${item.customer_name}</td><td><span class="table-status">${friendly(item.status)}</span></td><td>${categoryLabel(item.category)}</td><td>${departmentLabel(item.destination_department)}</td><td>${friendly(item.current_channel)}</td><td>${brDate(item.created_at)}</td><td>${brDate(item.expires_at)}<strong class="ttl-value" data-expires="${item.expires_at}" data-status="${item.status}">${ttl(item.expires_at, item.status)}</strong></td>`;
       row.addEventListener('click', () => show(item.id, row));
       tableBody.appendChild(row);
     });
@@ -49,7 +49,7 @@
     resetEndpoint = isReset ? '/api/demo/reset' : '/api/demo/clear';
     document.getElementById('reset-title').textContent = isReset ? 'Reiniciar demonstração?' : 'Limpar dados da demonstração?';
     document.getElementById('reset-description').textContent = isReset
-      ? 'Todas as CCEs, eventos e gravações serão removidos. Os três clientes fictícios serão preservados e a demonstração ficará pronta para recomeçar.'
+      ? 'Todas as CCEs, eventos e gravações serão removidos. Os clientes fictícios serão preservados e a demonstração ficará pronta para recomeçar.'
       : 'Todas as CCEs, eventos e gravações serão removidos. Os clientes fictícios serão preservados.';
     document.getElementById('confirm-reset').textContent = isReset ? 'Sim, reiniciar' : 'Sim, limpar';
     modal.showModal();
