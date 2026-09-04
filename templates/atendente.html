@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Cockpit do atendente — Claro One{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/atendente.css') }}">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/atendente.css') }}?v=20260904.2">{% endblock %}
 {% block content %}
 <div class="cockpit-header"><div><span class="eyebrow">OPERAÇÃO DE ATENDIMENTO</span><h1>Cockpit Claro One</h1></div><div class="operator"><span>Ambiente simulado</span><b>AT</b><div>Atendente Demo<small>Disponível</small></div></div></div>
 <div class="cockpit-layout">
@@ -29,4 +29,4 @@
 </div>
 <dialog id="transcript-modal" class="transcript-modal"><div class="modal-heading"><div><span class="eyebrow">IA DE TRANSCRIÇÃO · ÁUDIO → TEXTO</span><h2>Transcrição original</h2></div><button id="close-transcript" aria-label="Fechar">×</button></div><p>Transcrição gerada pela IA de voz</p><blockquote id="transcript-text"></blockquote><button class="button secondary" id="close-transcript-bottom">Fechar</button></dialog>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', path='/js/atendente.js') }}"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/atendente.js') }}?v=20260904.2"></script>{% endblock %}

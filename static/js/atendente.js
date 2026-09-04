@@ -1,5 +1,7 @@
 (() => {
-  const { api, showAlert, hideAlert, friendly, categoryLabel, departmentLabel, brTime, formatEntity, initials, formatCpf } = ClaroOne;
+  const { api, showAlert, hideAlert, friendly, brTime, formatEntity, initials, formatCpf } = ClaroOne;
+  const categoryLabel = ClaroOne.categoryLabel || friendly;
+  const departmentLabel = ClaroOne.departmentLabel || friendly;
   const list = document.getElementById('session-list');
   const content = document.getElementById('cockpit-content');
   const empty = document.getElementById('cockpit-empty');

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Claro One — continuidade de contexto entre canais">
   <title>{% block title %}Claro One{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='/css/global.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/global.css') }}?v=20260904.2">
   {% block styles %}{% endblock %}
-  <link rel="stylesheet" href="{{ url_for('static', path='/css/context-taxonomy.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/context-taxonomy.css') }}?v=20260904.2">
 </head>
 <body data-page="{{ page }}">
   <header class="topbar">
@@ -31,7 +31,7 @@
     <span>Protótipo acadêmico — dados fictícios</span>
   </footer>
   <div id="toast-region" class="toast-region" aria-live="polite"></div>
-  <script src="{{ url_for('static', path='/js/common.js') }}"></script>
+  <script src="{{ url_for('static', path='/js/common.js') }}?v=20260904.2"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

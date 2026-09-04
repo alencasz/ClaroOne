@@ -1,5 +1,8 @@
 (() => {
-  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, categoryLabel, departmentLabel, categoryArea, formatEntity, initials, currency } = ClaroOne;
+  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, formatEntity, initials, currency } = ClaroOne;
+  const categoryLabel = ClaroOne.categoryLabel || friendly;
+  const departmentLabel = ClaroOne.departmentLabel || friendly;
+  const categoryArea = ClaroOne.categoryArea || (() => 'generic');
   const alertBox = document.getElementById('mc-alert');
   const cpfInput = document.getElementById('mc-cpf');
   const ongoingCard = document.getElementById('mc-ongoing-card');

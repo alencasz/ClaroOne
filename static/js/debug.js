@@ -1,5 +1,7 @@
 (() => {
-  const { api, friendly, categoryLabel, departmentLabel, brDate, formatCpf, toast } = ClaroOne;
+  const { api, friendly, brDate, formatCpf, toast } = ClaroOne;
+  const categoryLabel = ClaroOne.categoryLabel || friendly;
+  const departmentLabel = ClaroOne.departmentLabel || friendly;
   const tableBody = document.getElementById('debug-sessions');
   const jsonCode = document.getElementById('session-json');
   const modal = document.getElementById('reset-modal');

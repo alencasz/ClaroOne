@@ -1,5 +1,7 @@
 (() => {
-  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, categoryLabel, departmentLabel, brDate } = ClaroOne;
+  const { api, jsonRequest, showAlert, hideAlert, queryCpf, formatCpf, friendly, brDate } = ClaroOne;
+  const categoryLabel = ClaroOne.categoryLabel || friendly;
+  const departmentLabel = ClaroOne.departmentLabel || friendly;
   const alertBox = document.getElementById('wa-alert');
   const cpfInput = document.getElementById('wa-cpf');
   const messageInput = document.getElementById('wa-message-input');

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Inspeção técnica — Claro One{% endblock %}
-{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/debug.css') }}">{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', path='/css/debug.css') }}?v=20260904.2">{% endblock %}
 {% block content %}
 <section class="debug-shell">
   <header class="debug-header"><div><span class="eyebrow">FERRAMENTA TÉCNICA</span><h1>Inspeção da CCE</h1><p>Estado persistido no SQLite para comprovação durante a apresentação.</p></div><div class="debug-actions"><button class="button ghost" id="debug-clear">Limpar dados</button><button class="button danger-outline" id="debug-reset">Reiniciar demonstração</button></div></header>
@@ -14,4 +14,4 @@
 </section>
 <dialog id="reset-modal" class="confirm-modal"><h2 id="reset-title">Reiniciar demonstração?</h2><p id="reset-description">Todas as CCEs, eventos e gravações serão removidos. Os clientes fictícios serão preservados.</p><div><button class="button ghost" id="cancel-reset">Cancelar</button><button class="button danger" id="confirm-reset">Sim, reiniciar</button></div></dialog>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', path='/js/debug.js') }}"></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', path='/js/debug.js') }}?v=20260904.2"></script>{% endblock %}

@@ -92,6 +92,21 @@ def test_channel_templates_expose_shared_friendly_taxonomy_fields():
         assert "OUTROS: 'Atendimento geral'" in common_js
 
 
+def test_static_assets_are_versioned_and_channel_scripts_have_compatibility_guard():
+    with TestClient(app) as client:
+        for path in ("/", "/telefone", "/whatsapp", "/minha-claro", "/atendente", "/debug"):
+            markup = client.get(path).text
+            asset_urls = re.findall(r'(?:src|href)="([^"]*/static/[^"]+)"', markup)
+            assert asset_urls
+            assert all("?v=" in url for url in asset_urls)
+
+        whatsapp = client.get("/whatsapp").text
+        assert whatsapp.index("/static/js/common.js") < whatsapp.index("/static/js/whatsapp.js")
+        for script in ("whatsapp.js", "minha_claro.js", "atendente.js", "debug.js"):
+            source = client.get(f"/static/js/{script}").text
+            assert "ClaroOne.categoryLabel || friendly" in source
+
+
 def test_invalid_upload_format_is_friendly():
     with TestClient(app) as client:
         session = client.post(
