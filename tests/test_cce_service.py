@@ -34,8 +34,10 @@ def test_create_cce_and_real_events():
     assert session["customer_name"] == "Lucas de Alencar"
     events = cce_service.get_timeline(session["id"])
     assert [event["event_type"] for event in events] == [
-        "CUSTOMER_AUTHENTICATED", "DEPARTMENT_SELECTED", "SESSION_CREATED", "CALL_STARTED"
+        "CUSTOMER_AUTHENTICATED", "DEPARTMENT_SELECTED", "SESSION_CREATED"
     ]
+    cce_service.start_call(session["id"])
+    assert cce_service.get_timeline(session["id"])[-1]["event_type"] == "CALL_STARTED"
 
 
 def test_find_active_contextualized_cce():

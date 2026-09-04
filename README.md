@@ -1,35 +1,46 @@
-# CLARO ONE
+# Claro One
 
-**Continuidade de contexto entre canais**
+Protótipo acadêmico de continuidade de contexto entre Telefone/URA, WhatsApp, Minha Claro e Cockpit. Os dados e canais são simulados.
 
-Protótipo acadêmico que mantém o contexto de um atendimento quando o cliente muda de canal. Todos os dados são fictícios e não existe integração com sistemas reais da Claro.
+## Arquitetura
 
-## Funcionalidades
+- FastAPI, Jinja2, HTML/CSS/JavaScript e SQLite.
+- CCE com estado estruturado, TTL de duas horas e timeline persistida.
+- GroqCloud para duas etapas separadas: áudio → texto com `whisper-large-v3-turbo`; texto → case com `openai/gpt-oss-20b` e JSON Schema estrito validado por Pydantic.
+- Não há modelos de IA executados localmente. O uso das IAs exige internet e uma chave da Groq.
 
-- Telefone/URA simulado com envio de gravação e recuperação de sessões iniciadas em outro canal.
-- Transcrição local com faster-whisper.
-- Interpretação do atendimento com Ollama e `qwen3:4b`.
-- CCE com contexto estruturado, eventos e validade de duas horas.
-- WhatsApp que inicia atendimentos por texto ou retoma uma CCE sem repetir o problema.
-- Minha Claro adaptado à CCE e com navegação manual quando não existe contexto ativo.
-- Cockpit com resumo, entidades, timeline e transcrição.
-- Tela de debug e reinicialização da demonstração.
+## Instalação no Windows
 
-## Como baixar
-
-Instale o [Git](https://git-scm.com/download/win), abra o PowerShell e execute:
+Para clonar o projeto:
 
 ```powershell
 git clone https://github.com/alencasz/ClaroOne.git
 cd ClaroOne
 ```
 
-## Como instalar e executar
+Depois:
 
-Siga o passo a passo do arquivo [INSTRUCOES_INSTALACAO_E_TESTES.txt](INSTRUCOES_INSTALACAO_E_TESTES.txt).
+1. Execute `INSTALAR.bat` uma vez.
+2. Crie uma chave em <https://console.groq.com/keys>.
+3. No arquivo `.env`, cole a chave após `GROQ_API_KEY=`.
+4. Execute `INICIAR_CLARO_ONE.bat` nos usos seguintes.
+5. Acesse <http://127.0.0.1:8000>.
 
-Depois de iniciar o servidor, abra:
+O `.env` não é versionado. A chave fica somente no backend.
+`DEMO_FALLBACK` permanece `false` por padrão; quando ativado manualmente, o modo simulado fica visível na interface.
 
-<http://127.0.0.1:8000>
+## Uso e testes
 
-Os áudios prontos para demonstração estão na pasta `Audios`.
+No Telefone, identifique o cliente, escolha a URA e clique em **Iniciar ligação** para gravar pelo microfone. Ao encerrar, o áudio é enviado automaticamente à Groq. O upload manual de MP3, WAV, M4A, WEBM ou OGG continua disponível como alternativa; há exemplos na pasta `Audios`.
+
+O WhatsApp pode iniciar um contexto por texto ou retomar uma CCE. O Minha Claro transforma o contexto em navegação e também permite navegação manual sem CCE. Cockpit e Debug mostram contexto e eventos reais. A Home ou o Debug reiniciam os dados da demonstração.
+
+Para executar a suíte:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+## Limites do protótipo
+
+Não há telefonia, WhatsApp, CRM, billing ou autenticação reais. O navegador precisa autorizar o microfone, e o uso da Groq está sujeito à conectividade, aos limites e custos da conta. Em produção, seriam necessários gestão segura de segredos, autenticação, observabilidade, armazenamento apropriado, integrações oficiais e políticas de privacidade e retenção.

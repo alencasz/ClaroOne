@@ -14,11 +14,13 @@
       const health = await api('/api/health');
       setStatus(0, health.backend === 'ok' ? 'Operacional' : 'Erro', health.backend === 'ok' ? 'ok' : 'error');
       setStatus(1, health.database === 'ok' ? 'Conectado' : 'Erro', health.database === 'ok' ? 'ok' : 'error');
-      const whisperReady = ['configured', 'loaded'].includes(health.whisper);
-      setStatus(2, whisperReady ? `${health.whisper_model} configurado` : 'Dependência ausente', whisperReady ? 'ok' : 'error');
-      setStatus(3, health.ollama === 'ok' ? `${health.ollama_model} disponível` : health.ollama === 'model_missing' ? 'Modelo ausente' : 'Indisponível', health.ollama === 'ok' ? 'ok' : 'warning');
-      if (health.ollama !== 'ok') {
-        guidance.textContent = 'IA de contextualização indisponível. Inicie o Ollama para habilitar o processamento.';
+      const groqReady = health.groq === 'ok';
+      setStatus(2, groqReady ? 'Disponível' : health.groq === 'not_configured' ? 'Chave ausente' : 'Indisponível', groqReady ? 'ok' : 'warning');
+      setStatus(3, groqReady ? 'Disponível' : health.groq === 'model_missing' ? 'Modelo ausente' : health.groq === 'authentication_error' ? 'Chave inválida' : 'Indisponível', groqReady ? 'ok' : 'warning');
+      if (!groqReady) {
+        guidance.textContent = health.groq === 'not_configured'
+          ? 'Configure GROQ_API_KEY no arquivo .env para habilitar o processamento.'
+          : 'Groq indisponível. Verifique a chave, a internet e os modelos configurados.';
         guidance.classList.remove('hidden');
       } else guidance.classList.add('hidden');
     } catch (error) {

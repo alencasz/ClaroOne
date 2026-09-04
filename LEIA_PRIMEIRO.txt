@@ -1,0 +1,22 @@
+CLARO ONE - PASSO A PASSO
+
+Voce precisa de internet e do Python instalado no Windows.
+Python: https://www.python.org/downloads/windows/
+
+1. Na primeira vez, clique duas vezes em INSTALAR.bat.
+2. Obtenha uma chave em https://console.groq.com/keys
+3. Crie sua conta, clique em Create API Key e copie a chave.
+4. Abra o arquivo .env com o Bloco de Notas.
+5. Cole a chave depois de GROQ_API_KEY= e salve o arquivo.
+6. Para usar o projeto, clique em INICIAR_CLARO_ONE.bat.
+7. O navegador abrira http://127.0.0.1:8000
+8. Ao iniciar uma ligacao, clique em Permitir para liberar o microfone.
+9. Para encerrar o servidor, volte ao terminal e pressione Ctrl+C.
+
+CLIENTES FICTICIOS
+123.456.789-00 - Lucas de Alencar
+987.654.321-00 - Marina Costa
+111.222.333-44 - Rafael Nogueira
+
+Para apagar atendimentos e recomecar, use
+"Limpar / reiniciar demonstracao" na pagina inicial.

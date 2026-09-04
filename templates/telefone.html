@@ -54,17 +54,21 @@
     </section>
 
     <section class="phone-step call-screen" data-step="call">
-      <span class="call-state"><i></i> LIGAÇÃO EM ANDAMENTO</span>
+      <span class="call-state preparing" id="call-state"><i></i> <span id="call-state-text">PREPARANDO LIGAÇÃO</span></span>
       <div class="avatar" id="phone-avatar">LA</div>
       <h2 id="call-customer-name"></h2><p id="call-department"></p>
       <div class="call-timer" id="call-timer">00:00</div>
-      <div class="call-controls"><span>◉<small>Microfone</small></span><span>⌁<small>Áudio</small></span></div>
+      <div class="microphone-status" id="microphone-status"><i></i><span>Microfone ainda não iniciado</span></div>
+      <button class="button primary full" id="start-call">Iniciar ligação</button>
+      <button class="button danger full hidden" id="end-call">Encerrar ligação</button>
+      <button class="button text-button full hidden" id="cancel-call">Cancelar ligação</button>
+      <div class="manual-divider"><span>ou use uma gravação pronta</span></div>
       <label class="upload-box" for="audio-file">
-        <span class="upload-symbol">↑</span><span><strong>Carregar gravação da ligação</strong><small>WAV, MP3 ou M4A · máximo 25 MB</small></span>
-        <input type="file" id="audio-file" accept=".wav,.mp3,.m4a,audio/wav,audio/mpeg,audio/mp4">
+        <span class="upload-symbol">↑</span><span><strong>Carregar gravação manualmente</strong><small>MP3, WAV, M4A, WEBM ou OGG · máximo 25 MB</small></span>
+        <input type="file" id="audio-file" accept=".wav,.mp3,.m4a,.webm,.ogg,audio/wav,audio/mpeg,audio/mp4,audio/webm,audio/ogg">
       </label>
       <div class="file-selected hidden" id="file-selected"><span>✓</span><div><strong id="file-name"></strong><small>Pronto para enviar</small></div></div>
-      <button class="button danger full" id="end-call">Encerrar ligação</button>
+      <button class="button secondary full hidden" id="process-file">Enviar gravação e encerrar</button>
     </section>
 
     <section class="phone-step processing-screen" data-step="processing">
@@ -72,14 +76,15 @@
       <h2>Transformando a ligação<br>em contexto</h2>
       <p>As etapas refletem o processamento real do backend.</p>
       <ol class="processing-list" id="processing-list">
-        <li data-process="audio"><i></i><span><b>Áudio recebido</b><small>Gravação armazenada com segurança</small></span><em>Aguardando</em></li>
+        <li data-process="audio"><i></i><span><b>Enviando gravação</b><small>Áudio enviado com segurança ao backend</small></span><em>Aguardando</em></li>
         <li data-process="transcription"><i></i><span><b>IA de Transcrição</b><small>Áudio → texto em português</small></span><em>Aguardando</em></li>
         <li data-process="transcribed"><i></i><span><b>Transcrição concluída</b><small>Texto armazenado na CCE</small></span><em>Aguardando</em></li>
         <li data-process="context"><i></i><span><b>IA de Contexto</b><small>Texto + URA → case estruturado</small></span><em>Aguardando</em></li>
         <li data-process="structured"><i></i><span><b>Contexto estruturado</b><small>Problema, entidades e destino identificados</small></span><em>Aguardando</em></li>
-        <li data-process="updated"><i></i><span><b>CCE atualizada</b><small>Disponível para os demais canais</small></span><em>Aguardando</em></li>
+        <li data-process="updated"><i></i><span><b>CCE criada</b><small>Contexto disponível para os demais canais</small></span><em>Aguardando</em></li>
       </ol>
       <button class="button secondary full hidden" id="retry-processing">Tentar novamente</button>
+      <button class="button text-button full hidden" id="choose-another-audio">Escolher outra gravação</button>
     </section>
 
     <section class="phone-step result-screen" data-step="result">

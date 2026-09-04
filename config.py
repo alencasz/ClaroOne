@@ -22,9 +22,12 @@ class Settings:
     app_name: str = "CLARO ONE"
     database_path: Path = Path(os.getenv("DATABASE_PATH", BASE_DIR / "data" / "claro_one.db"))
     upload_dir: Path = Path(os.getenv("UPLOAD_DIR", BASE_DIR / "uploads"))
-    ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-    ollama_model: str = os.getenv("OLLAMA_MODEL", "qwen3:4b")
-    whisper_model: str = os.getenv("WHISPER_MODEL", "small")
+    groq_api_key: str = os.getenv("GROQ_API_KEY", "").strip()
+    groq_transcription_model: str = os.getenv(
+        "GROQ_TRANSCRIPTION_MODEL", "whisper-large-v3-turbo"
+    ).strip()
+    groq_context_model: str = os.getenv("GROQ_CONTEXT_MODEL", "openai/gpt-oss-20b").strip()
+    groq_timeout_seconds: float = float(os.getenv("GROQ_TIMEOUT_SECONDS", "60"))
     cce_ttl_hours: int = int(os.getenv("CCE_TTL_HOURS", "2"))
     demo_fallback: bool = _as_bool(os.getenv("DEMO_FALLBACK"), False)
     max_upload_bytes: int = int(os.getenv("MAX_UPLOAD_MB", "25")) * 1024 * 1024

@@ -115,7 +115,6 @@ def create_session(cpf: str, initial_department: str) -> dict[str, Any]:
             connection,
         )
         create_event(session_id, "TELEFONE", "SESSION_CREATED", "CCE criada", connection)
-        create_event(session_id, "TELEFONE", "CALL_STARTED", "Ligação iniciada", connection)
     return get_session(session_id)
 
 
@@ -250,17 +249,33 @@ def register_audio(session_id: str, audio_path: str) -> dict[str, Any]:
     session = get_session(session_id)
     if session["status"] in {"RESOLVIDA", "EXPIRADA"}:
         raise SessionUnavailableError("Esta CCE não pode mais receber áudio.")
+    if session.get("transcript"):
+        raise SessionUnavailableError("A gravação desta CCE já foi processada.")
     result = update_session(session_id, audio_path=audio_path)
     create_event(session_id, "TELEFONE", "AUDIO_RECEIVED", "Gravação da ligação recebida")
     return result
+
+
+def start_call(session_id: str) -> dict[str, Any]:
+    session = get_session(session_id)
+    if session["status"] != "EM_ATENDIMENTO" or session.get("audio_path"):
+        raise SessionUnavailableError("Esta ligação não pode ser iniciada novamente.")
+    events = get_timeline(session_id)
+    if any(event["event_type"] == "CALL_STARTED" for event in events):
+        return session
+    create_event(session_id, "TELEFONE", "CALL_STARTED", "Ligação iniciada")
+    return get_session(session_id, check_expiration=False)
 
 
 def start_processing(session_id: str) -> dict[str, Any]:
     session = get_session(session_id)
     if not session.get("audio_path"):
         raise CCEError("Adicione uma gravação para processar o atendimento.")
+    if session.get("transcript"):
+        raise SessionUnavailableError("Esta gravação já foi transcrita e não será processada novamente.")
     update_session(session_id, status="PROCESSANDO")
-    if session["status"] != "PROCESSANDO":
+    events = get_timeline(session_id)
+    if not any(event["event_type"] == "CALL_FINISHED" for event in events):
         create_event(session_id, "TELEFONE", "CALL_FINISHED", "Ligação encerrada")
     create_event(session_id, "IA_TRANSCRICAO", "TRANSCRIPTION_STARTED", "Transcrição iniciada")
     return get_session(session_id, check_expiration=False)

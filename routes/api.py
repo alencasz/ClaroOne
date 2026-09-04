@@ -4,7 +4,7 @@ import logging
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from config import settings
 from database import database_health
@@ -40,14 +40,14 @@ def _handle_domain_error(exc: Exception) -> HTTPException:
 
 @router.get("/health")
 def health():
-    ollama_ok, ollama_state = context_service.health_check()
+    groq_state, key_configured = context_service.health_check()
     return {
         "backend": "ok",
         "database": "ok" if database_health() else "error",
-        "ollama": "ok" if ollama_ok else ollama_state,
-        "ollama_model": settings.ollama_model,
-        "whisper": transcription_service.model_status(),
-        "whisper_model": settings.whisper_model,
+        "groq": groq_state,
+        "groq_key_configured": key_configured,
+        "transcription_model": settings.groq_transcription_model,
+        "context_model": settings.groq_context_model,
         "demo_fallback": settings.demo_fallback,
     }
 
@@ -128,10 +128,29 @@ def get_session(session_id: str):
 
 
 @router.post("/sessions/{session_id}/audio")
-async def upload_audio(session_id: str, audio: UploadFile = File(...)):
+async def upload_audio(
+    session_id: str,
+    audio: UploadFile = File(...),
+    duration_ms: int | None = Form(default=None),
+):
+    try:
+        previous_audio_path = cce_service.get_session(session_id).get("audio_path")
+    except Exception as exc:
+        await audio.close()
+        raise _handle_domain_error(exc) from exc
     suffix = Path(audio.filename or "").suffix.lower()
     if suffix not in transcription_service.SUPPORTED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail="Formato inválido. Envie um arquivo WAV, MP3 ou M4A.")
+        await audio.close()
+        raise HTTPException(
+            status_code=400,
+            detail="Formato inválido. Envie um arquivo WAV, MP3, M4A, WEBM ou OGG.",
+        )
+    if duration_ms is not None and duration_ms < 1000:
+        await audio.close()
+        raise HTTPException(
+            status_code=400,
+            detail="A gravação é curta demais. Fale por pelo menos 1 segundo.",
+        )
     internal_path = settings.upload_dir / f"{uuid.uuid4().hex}{suffix}"
     size = 0
     try:
@@ -148,6 +167,10 @@ async def upload_audio(session_id: str, audio: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="O arquivo de áudio está vazio.")
         transcription_service.validate_audio_file(internal_path)
         session = cce_service.register_audio(session_id, str(internal_path))
+        if previous_audio_path:
+            previous_path = Path(previous_audio_path).resolve()
+            if previous_path.parent == settings.upload_dir.resolve() and previous_path.is_file():
+                previous_path.unlink()
         return {"message": "Áudio recebido.", "filename": audio.filename, "session": _public_session(session)}
     except HTTPException:
         internal_path.unlink(missing_ok=True)
@@ -169,9 +192,20 @@ def transcribe(session_id: str):
         transcript = transcription_service.transcribe_audio(session["audio_path"])
         updated = cce_service.store_transcript(session_id, transcript)
         return {"transcript": transcript, "session": _public_session(updated)}
+    except transcription_service.TranscriptionProviderError as exc:
+        logger.exception("Falha no serviço de transcrição da sessão %s", session_id)
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except transcription_service.TranscriptionError as exc:
         logger.exception("Erro amigável de transcrição na sessão %s", session_id)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise _handle_domain_error(exc) from exc
+
+
+@router.post("/sessions/{session_id}/call/start")
+def start_call(session_id: str):
+    try:
+        return _public_session(cce_service.start_call(session_id))
     except Exception as exc:
         raise _handle_domain_error(exc) from exc
 

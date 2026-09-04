@@ -7,6 +7,23 @@ from schemas import ContextCase
 from services.context_service import ContextServiceError
 
 
+def webm_bytes(size: int = 512) -> bytes:
+    return b"\x1a\x45\xdf\xa3" + b"\x00" * (size - 4)
+
+
+def internet_case() -> ContextCase:
+    return ContextCase(
+        intent="SUPORTE_INTERNET",
+        category="INTERNET",
+        problem="Internet sem funcionar",
+        summary="Cliente informa indisponibilidade da internet.",
+        entities={"desde": "ontem"},
+        destination_department="SUPORTE_TECNICO",
+        suggested_action="DIAGNOSTICAR_CONEXAO",
+        priority="NORMAL",
+    )
+
+
 def test_pages_open_and_session_api_normalizes_cpf():
     with TestClient(app) as client:
         for path in ("/", "/telefone", "/whatsapp", "/minha-claro", "/atendente", "/debug"):
@@ -25,7 +42,12 @@ def test_pages_open_and_session_api_normalizes_cpf():
         assert session["audio_available"] is False
 
         timeline = client.get(f"/api/sessions/{session['id']}/events").json()
-        assert len(timeline) == 4
+        assert len(timeline) == 3
+
+        started = client.post(f"/api/sessions/{session['id']}/call/start")
+        assert started.status_code == 200
+        timeline = client.get(f"/api/sessions/{session['id']}/events").json()
+        assert timeline[-1]["event_type"] == "CALL_STARTED"
 
 
 def test_invalid_upload_format_is_friendly():
@@ -39,10 +61,10 @@ def test_invalid_upload_format_is_friendly():
             files={"audio": ("anotacoes.txt", b"nao e audio", "text/plain")},
         )
         assert response.status_code == 400
-        assert "WAV, MP3 ou M4A" in response.json()["detail"]
+        assert "WEBM ou OGG" in response.json()["detail"]
 
 
-def test_fake_wav_is_rejected_before_whisper_loading():
+def test_fake_wav_is_rejected_before_external_processing():
     with TestClient(app) as client:
         session = client.post(
             "/api/sessions",
@@ -53,23 +75,100 @@ def test_fake_wav_is_rejected_before_whisper_loading():
             files={"audio": ("gravacao.wav", b"isto nao e um wav", "audio/wav")},
         )
         assert response.status_code == 422
-        assert "áudio" in response.json()["detail"]
+        assert "gravação" in response.json()["detail"]
+
+
+def test_empty_and_too_short_browser_recordings_are_rejected():
+    with TestClient(app) as client:
+        session = client.post(
+            "/api/sessions",
+            json={"cpf": "12345678900", "initial_department": "INTERNET"},
+        ).json()
+        empty = client.post(
+            f"/api/sessions/{session['id']}/audio",
+            files={"audio": ("gravacao.webm", b"", "audio/webm")},
+        )
+        assert empty.status_code == 400
+        assert "vazio" in empty.json()["detail"]
+
+        too_short = client.post(
+            f"/api/sessions/{session['id']}/audio",
+            data={"duration_ms": "400"},
+            files={"audio": ("gravacao.webm", webm_bytes(), "audio/webm")},
+        )
+        assert too_short.status_code == 400
+        assert "curta demais" in too_short.json()["detail"]
+
+
+def test_complete_audio_context_and_channel_flow_without_external_api(monkeypatch):
+    transcript = "Minha internet está sem funcionar desde ontem e o modem está vermelho."
+    monkeypatch.setattr(
+        "routes.api.transcription_service.transcribe_audio",
+        lambda _path: transcript,
+    )
+    monkeypatch.setattr(
+        "routes.api.context_service.analyze_context",
+        lambda received, _department: internet_case() if received == transcript else None,
+    )
+
+    with TestClient(app) as client:
+        session = client.post(
+            "/api/sessions",
+            json={"cpf": "12345678900", "initial_department": "INTERNET"},
+        ).json()
+        assert client.post(f"/api/sessions/{session['id']}/call/start").status_code == 200
+        uploaded = client.post(
+            f"/api/sessions/{session['id']}/audio",
+            data={"duration_ms": "2500"},
+            files={"audio": ("gravacao.webm", webm_bytes(), "audio/webm")},
+        )
+        assert uploaded.status_code == 200
+        assert uploaded.json()["session"]["audio_available"] is True
+
+        transcribed = client.post(f"/api/sessions/{session['id']}/transcribe")
+        assert transcribed.status_code == 200
+        assert transcribed.json()["transcript"] == transcript
+        contextualized = client.post(f"/api/sessions/{session['id']}/contextualize")
+        assert contextualized.status_code == 200
+        result = contextualized.json()["session"]
+        assert result["status"] == "SUSPENSA"
+        assert result["category"] == "INTERNET"
+        assert result["destination_department"] == "SUPORTE_TECNICO"
+
+        whatsapp = client.post(
+            f"/api/sessions/{session['id']}/resume", json={"channel": "WHATSAPP"}
+        )
+        assert whatsapp.status_code == 200
+        minha_claro = client.post(
+            f"/api/sessions/{session['id']}/resume", json={"channel": "MINHA_CLARO"}
+        )
+        assert minha_claro.status_code == 200
+        assert minha_claro.json()["current_channel"] == "MINHA_CLARO"
+        assert client.get(f"/atendente?session={session['id']}").status_code == 200
+
+        event_types = [
+            event["event_type"]
+            for event in client.get(f"/api/sessions/{session['id']}/events").json()
+        ]
+        assert event_types[:4] == [
+            "CUSTOMER_AUTHENTICATED",
+            "DEPARTMENT_SELECTED",
+            "SESSION_CREATED",
+            "CALL_STARTED",
+        ]
+        assert "TRANSCRIPTION_COMPLETED" in event_types
+        assert "CONTEXT_IDENTIFIED" in event_types
+        assert event_types.count("SESSION_RESUMED") == 2
+
+        duplicate = client.post(f"/api/sessions/{session['id']}/transcribe")
+        assert duplicate.status_code == 409
 
 
 def test_whatsapp_can_create_context_then_continue_by_phone(monkeypatch):
     def fake_analysis(message: str, department: str) -> ContextCase:
         assert "internet" in message.lower()
         assert department == "ATENDIMENTO DIGITAL / WHATSAPP"
-        return ContextCase(
-            intent="SUPORTE_INTERNET",
-            category="INTERNET",
-            problem="Internet sem funcionar",
-            summary="Cliente informa indisponibilidade da internet.",
-            entities={"desde": "ontem"},
-            destination_department="SUPORTE_TECNICO",
-            suggested_action="DIAGNOSTICAR_CONEXAO",
-            priority="NORMAL",
-        )
+        return internet_case()
 
     monkeypatch.setattr("routes.api.context_service.analyze_context", fake_analysis)
     with TestClient(app) as client:
@@ -174,3 +273,42 @@ def test_whatsapp_ai_failure_does_not_leave_orphan_session(monkeypatch):
         assert response.status_code == 503
         assert client.get("/api/sessions/active/12345678900").status_code == 404
         assert client.get("/api/sessions").json() == []
+
+
+def test_health_check_shape_without_exposing_key(monkeypatch):
+    monkeypatch.setattr("routes.api.context_service.health_check", lambda: ("ok", True))
+    with TestClient(app) as client:
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload == {
+            "backend": "ok",
+            "database": "ok",
+            "groq": "ok",
+            "groq_key_configured": True,
+            "transcription_model": "whisper-large-v3-turbo",
+            "context_model": "openai/gpt-oss-20b",
+            "demo_fallback": False,
+        }
+        assert "api_key" not in payload
+
+
+def test_reset_removes_sessions_and_preserves_real_seed_customers(monkeypatch):
+    monkeypatch.setattr("routes.api.context_service.analyze_context", lambda *_args: internet_case())
+    with TestClient(app) as client:
+        created = client.post(
+            "/api/sessions/message",
+            json={"cpf": "12345678900", "message": "Minha internet não funciona."},
+        )
+        assert created.status_code == 201
+        assert client.get("/api/sessions").json()
+        reset = client.post("/api/demo/reset")
+        assert reset.status_code == 200
+        assert client.get("/api/sessions").json() == []
+        expected = {
+            "12345678900": "Lucas de Alencar",
+            "98765432100": "Marina Costa",
+            "11122233344": "Rafael Nogueira",
+        }
+        for cpf, name in expected.items():
+            assert client.get(f"/api/customers/{cpf}").json()["name"] == name
